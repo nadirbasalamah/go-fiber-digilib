@@ -2,9 +2,9 @@ package middlewares
 
 import (
 	"errors"
-	"go-digilib/pkg/dtos"
-	"go-digilib/pkg/rajaongkir"
-	"go-digilib/pkg/utils"
+	"go-fiber-digilib/pkg/dtos"
+	"go-fiber-digilib/pkg/rajaongkir"
+	"go-fiber-digilib/pkg/utils"
 	"net/http"
 	"reflect"
 	"regexp"

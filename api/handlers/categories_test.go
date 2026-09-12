@@ -8,10 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	"go-digilib/categories"
-	catmocks "go-digilib/categories/mocks"
-	"go-digilib/pkg/dtos"
-	"go-digilib/pkg/utils"
+	"go-fiber-digilib/categories"
+	catmocks "go-fiber-digilib/categories/mocks"
+	"go-fiber-digilib/pkg/dtos"
+	"go-fiber-digilib/pkg/utils"
 
 	"github.com/labstack/echo/v5"
 	"github.com/stretchr/testify/mock"

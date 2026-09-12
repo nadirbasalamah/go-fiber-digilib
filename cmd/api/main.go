@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
-	"go-digilib/api"
-	"go-digilib/api/middlewares"
-	"go-digilib/db/drivers"
-	"go-digilib/pkg/constant"
-	"go-digilib/pkg/fileupload"
-	"go-digilib/pkg/utils"
+	"go-fiber-digilib/api"
+	"go-fiber-digilib/api/middlewares"
+	"go-fiber-digilib/db/drivers"
+	"go-fiber-digilib/pkg/constant"
+	"go-fiber-digilib/pkg/fileupload"
+	"go-fiber-digilib/pkg/utils"
 	"log"
 	"strconv"
 )
@@ -39,14 +39,14 @@ func main() {
 	var (
 		repository = dbConfig.InitDB()
 		cloudinary = cloudinaryConfig.InitCloudinary()
-		e          = api.NewEcho(repository, cloudinary, jwtConfig)
+		app        = api.NewApp(repository, cloudinary, jwtConfig)
 	)
 
 	drivers.MigrateDB(repository)
 
 	appPort := fmt.Sprintf(":%s", utils.GetConfig(constant.PORT))
 
-	if err := e.Start(appPort); err != nil {
-		e.Logger.Error("failed to start server", "error", err)
+	if err := app.Listen(appPort); err != nil {
+		log.Fatalf("failed to start server %v\n", err)
 	}
 }

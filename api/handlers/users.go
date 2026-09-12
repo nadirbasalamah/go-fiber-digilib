@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"go-digilib/api/middlewares"
-	"go-digilib/pkg/dtos"
-	"go-digilib/pkg/fileupload"
-	"go-digilib/pkg/utils"
-	"go-digilib/users"
+	"go-fiber-digilib/api/middlewares"
+	"go-fiber-digilib/pkg/dtos"
+	"go-fiber-digilib/pkg/fileupload"
+	"go-fiber-digilib/pkg/utils"
+	"go-fiber-digilib/users"
 	"net/http"
 	"path/filepath"
 	"strings"

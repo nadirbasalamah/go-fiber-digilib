@@ -1,7 +1,7 @@
 package books
 
 import (
-	"go-digilib/categories"
+	"go-fiber-digilib/categories"
 	"mime/multipart"
 	"time"
 

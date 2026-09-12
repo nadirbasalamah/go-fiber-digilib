@@ -6,7 +6,7 @@ package users
 
 import (
 	"context"
-	"go-digilib/users"
+	"go-fiber-digilib/users"
 
 	mock "github.com/stretchr/testify/mock"
 )

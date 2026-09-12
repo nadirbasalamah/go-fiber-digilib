@@ -2,9 +2,9 @@ package rajaongkir
 
 import (
 	"encoding/json"
-	"go-digilib/pkg/clients"
-	"go-digilib/pkg/constant"
-	"go-digilib/pkg/utils"
+	"go-fiber-digilib/pkg/clients"
+	"go-fiber-digilib/pkg/constant"
+	"go-fiber-digilib/pkg/utils"
 	"net/http"
 )
 

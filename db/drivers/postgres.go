@@ -2,7 +2,7 @@ package drivers
 
 import (
 	"fmt"
-	"go-digilib/db/models"
+	"go-fiber-digilib/db/models"
 	"log"
 
 	"gorm.io/driver/postgres"

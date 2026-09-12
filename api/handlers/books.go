@@ -2,11 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
-	"go-digilib/books"
-	"go-digilib/pkg/ai"
-	"go-digilib/pkg/dtos"
-	"go-digilib/pkg/fileupload"
-	"go-digilib/pkg/utils"
+	"go-fiber-digilib/books"
+	"go-fiber-digilib/pkg/ai"
+	"go-fiber-digilib/pkg/dtos"
+	"go-fiber-digilib/pkg/fileupload"
+	"go-fiber-digilib/pkg/utils"
 	"net/http"
 	"path/filepath"
 	"strconv"

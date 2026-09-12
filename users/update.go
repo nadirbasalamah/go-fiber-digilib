@@ -2,7 +2,7 @@ package users
 
 import (
 	"context"
-	"go-digilib/db/models"
+	"go-fiber-digilib/db/models"
 
 	"gorm.io/gorm"
 )

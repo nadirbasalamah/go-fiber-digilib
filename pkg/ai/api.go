@@ -3,9 +3,9 @@ package ai
 import (
 	"encoding/json"
 	"fmt"
-	"go-digilib/pkg/clients"
-	"go-digilib/pkg/constant"
-	"go-digilib/pkg/utils"
+	"go-fiber-digilib/pkg/clients"
+	"go-fiber-digilib/pkg/constant"
+	"go-fiber-digilib/pkg/utils"
 	"net/http"
 )
 

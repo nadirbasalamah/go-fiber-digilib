@@ -6,9 +6,10 @@ import (
 	"regexp"
 	"testing"
 
+	"go-fiber-digilib/pkg/utils"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/require"
-	"go-digilib/pkg/utils"
 )
 
 func TestGetAll_Success(t *testing.T) {

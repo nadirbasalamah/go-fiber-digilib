@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"context"
-	"go-digilib/api/middlewares"
-	"go-digilib/carts"
-	"go-digilib/pkg/dtos"
+	"go-fiber-digilib/api/middlewares"
+	"go-fiber-digilib/carts"
+	"go-fiber-digilib/pkg/dtos"
 	"net/http"
 	"strconv"
 

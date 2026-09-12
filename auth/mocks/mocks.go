@@ -6,7 +6,7 @@ package auth
 
 import (
 	"context"
-	"go-digilib/auth"
+	"go-fiber-digilib/auth"
 
 	mock "github.com/stretchr/testify/mock"
 )

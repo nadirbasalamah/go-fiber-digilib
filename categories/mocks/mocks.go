@@ -6,8 +6,8 @@ package categories
 
 import (
 	"context"
-	"go-digilib/categories"
-	"go-digilib/pkg/utils"
+	"go-fiber-digilib/categories"
+	"go-fiber-digilib/pkg/utils"
 
 	mock "github.com/stretchr/testify/mock"
 )

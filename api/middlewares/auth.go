@@ -3,7 +3,7 @@ package middlewares
 import (
 	"context"
 	"errors"
-	"go-digilib/db/models"
+	"go-fiber-digilib/db/models"
 	"net/http"
 	"time"
 

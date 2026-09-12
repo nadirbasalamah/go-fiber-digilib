@@ -8,10 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	"go-digilib/api/middlewares"
-	"go-digilib/pkg/dtos"
-	"go-digilib/users"
-	usermocks "go-digilib/users/mocks"
+	"go-fiber-digilib/api/middlewares"
+	"go-fiber-digilib/pkg/dtos"
+	"go-fiber-digilib/users"
+	usermocks "go-fiber-digilib/users/mocks"
 
 	echojwt "github.com/labstack/echo-jwt/v5"
 	"github.com/labstack/echo/v5"

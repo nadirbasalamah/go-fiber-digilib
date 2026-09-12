@@ -6,8 +6,8 @@ package books
 
 import (
 	"context"
-	"go-digilib/books"
-	"go-digilib/pkg/utils"
+	"go-fiber-digilib/books"
+	"go-fiber-digilib/pkg/utils"
 
 	mock "github.com/stretchr/testify/mock"
 )

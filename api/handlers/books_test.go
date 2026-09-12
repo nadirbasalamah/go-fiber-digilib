@@ -7,11 +7,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"go-digilib/books"
-	bksmocks "go-digilib/books/mocks"
-	"go-digilib/pkg/ai"
-	"go-digilib/pkg/dtos"
-	"go-digilib/pkg/utils"
+	"go-fiber-digilib/books"
+	bksmocks "go-fiber-digilib/books/mocks"
+	"go-fiber-digilib/pkg/ai"
+	"go-fiber-digilib/pkg/dtos"
+	"go-fiber-digilib/pkg/utils"
 
 	"github.com/labstack/echo/v5"
 	"github.com/stretchr/testify/mock"

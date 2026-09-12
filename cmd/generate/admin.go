@@ -2,10 +2,10 @@ package main
 
 import (
 	"errors"
-	"go-digilib/db/drivers"
-	"go-digilib/db/models"
-	"go-digilib/pkg/constant"
-	"go-digilib/pkg/utils"
+	"go-fiber-digilib/db/drivers"
+	"go-fiber-digilib/db/models"
+	"go-fiber-digilib/pkg/constant"
+	"go-fiber-digilib/pkg/utils"
 	"log"
 	"strconv"
 

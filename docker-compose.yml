@@ -1,6 +1,6 @@
 services:
   api-service:
-    image: nadirbasalamah/go-digilib:latest
+    # image: TODO: change image name
     container_name: api-service
     environment:
       - APP_MODE=${APP_MODE}

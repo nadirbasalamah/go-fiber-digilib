@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"go-digilib/pkg/dtos"
-	"go-digilib/settings"
-	setmocks "go-digilib/settings/mocks"
+	"go-fiber-digilib/pkg/dtos"
+	"go-fiber-digilib/settings"
+	setmocks "go-fiber-digilib/settings/mocks"
 
 	"github.com/labstack/echo/v5"
 	"github.com/stretchr/testify/mock"

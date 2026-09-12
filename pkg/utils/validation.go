@@ -1,6 +1,6 @@
 package utils
 
-import "go-digilib/pkg/constant"
+import "go-fiber-digilib/pkg/constant"
 
 func ValidateFile(ext string) bool {
 	return constant.ALLOWED_EXTENSIONS[ext]

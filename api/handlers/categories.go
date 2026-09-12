@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"go-digilib/categories"
-	"go-digilib/pkg/dtos"
-	"go-digilib/pkg/utils"
+	"go-fiber-digilib/categories"
+	"go-fiber-digilib/pkg/dtos"
+	"go-fiber-digilib/pkg/utils"
 	"net/http"
 	"strconv"
 

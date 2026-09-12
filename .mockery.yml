@@ -22,37 +22,37 @@ require-template-schema-exists: true
 template: testify
 template-schema: "{{.Template}}.schema.json"
 packages:
-  go-digilib/books:
+  go-fiber-digilib/books:
     interfaces:
       Repository:
       Service:
 
-  go-digilib/categories:
+  go-fiber-digilib/categories:
     interfaces:
       Repository:
       Service:
 
-  go-digilib/users:
+  go-fiber-digilib/users:
     interfaces:
       Repository:
       Service:
 
-  go-digilib/rents:
+  go-fiber-digilib/rents:
     interfaces:
       Repository:
       Service:
 
-  go-digilib/carts:
+  go-fiber-digilib/carts:
     interfaces:
       Repository:
       Service:
 
-  go-digilib/settings:
+  go-fiber-digilib/settings:
     interfaces:
       Repository:
       Service:
 
-  go-digilib/auth:
+  go-fiber-digilib/auth:
     interfaces:
       Repository:
       Service:

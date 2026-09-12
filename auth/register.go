@@ -2,8 +2,8 @@ package auth
 
 import (
 	"context"
-	"go-digilib/db/models"
-	"go-digilib/pkg/utils"
+	"go-fiber-digilib/db/models"
+	"go-fiber-digilib/pkg/utils"
 
 	"gorm.io/gorm"
 )

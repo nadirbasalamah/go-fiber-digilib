@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"go-digilib/api/middlewares"
-	"go-digilib/auth"
-	"go-digilib/db/models"
-	"go-digilib/pkg/dtos"
-	"go-digilib/pkg/utils"
+	"go-fiber-digilib/api/middlewares"
+	"go-fiber-digilib/auth"
+	"go-fiber-digilib/db/models"
+	"go-fiber-digilib/pkg/dtos"
+	"go-fiber-digilib/pkg/utils"
 	"net/http"
 
 	"github.com/labstack/echo/v5"

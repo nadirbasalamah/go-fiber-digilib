@@ -8,11 +8,11 @@ import (
 	"strings"
 	"testing"
 
-	"go-digilib/api/middlewares"
-	"go-digilib/auth"
-	authmocks "go-digilib/auth/mocks"
-	"go-digilib/db/models"
-	"go-digilib/pkg/dtos"
+	"go-fiber-digilib/api/middlewares"
+	"go-fiber-digilib/auth"
+	authmocks "go-fiber-digilib/auth/mocks"
+	"go-fiber-digilib/db/models"
+	"go-fiber-digilib/pkg/dtos"
 
 	"github.com/labstack/echo/v5"
 	"github.com/stretchr/testify/mock"

@@ -1,14 +1,14 @@
 package handlers
 
 import (
-	"go-digilib/api/middlewares"
-	"go-digilib/pkg/constant"
-	"go-digilib/pkg/dtos"
-	"go-digilib/pkg/rajaongkir"
-	"go-digilib/pkg/utils"
-	"go-digilib/rents"
-	"go-digilib/settings"
-	"go-digilib/users"
+	"go-fiber-digilib/api/middlewares"
+	"go-fiber-digilib/pkg/constant"
+	"go-fiber-digilib/pkg/dtos"
+	"go-fiber-digilib/pkg/rajaongkir"
+	"go-fiber-digilib/pkg/utils"
+	"go-fiber-digilib/rents"
+	"go-fiber-digilib/settings"
+	"go-fiber-digilib/users"
 	"net/http"
 	"strconv"
 	"time"
