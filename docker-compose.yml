@@ -1,0 +1,21 @@
+services:
+  api-service:
+    image: nadirbasalamah/go-digilib:latest
+    container_name: api-service
+    environment:
+      - APP_MODE=${APP_MODE}
+      - PORT=${PORT}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - JWT_EXPIRE_DURATION=${JWT_EXPIRE_DURATION}
+      - CLOUDINARY_URL=${CLOUDINARY_URL}
+      - RAJAONGKIR_API_KEY=${RAJAONGKIR_API_KEY}
+      - AI_API_KEY=${AI_API_KEY}
+      - AI_MODEL=${AI_MODEL}
+    ports:
+      - ${PORT}:1323
+    restart: on-failure
