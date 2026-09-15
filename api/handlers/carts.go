@@ -8,119 +8,117 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/labstack/echo/v5"
+	"github.com/gofiber/fiber/v3"
 )
 
 type Carts struct {
 	carts carts.Service
 }
 
-func (c Carts) GetByUser(ctx *echo.Context) error {
-	userData := ctx.Get("userData").(*middlewares.JWTCustomClaims)
+func (c Carts) GetByUser(ctx fiber.Ctx) error {
+	userData := ctx.Locals("userData").(*middlewares.JWTCustomClaims)
 	userID := userData.ID
 
-	cartsData, err := c.carts.GetByUser(ctx.Request().Context(), uint(userID))
+	cartsData, err := c.carts.GetByUser(ctx.Context(), uint(userID))
 
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, dtos.Response[any]{
+		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "fetch carts failed",
 		})
 	}
 
-	return ctx.JSON(http.StatusOK, dtos.Response[[]carts.Cart]{
+	return ctx.Status(http.StatusOK).JSON(dtos.Response[[]carts.Cart]{
 		Status:  "success",
 		Message: "all carts",
 		Data:    cartsData,
 	})
 }
 
-func (c Carts) Create(ctx *echo.Context) error {
-	userData := ctx.Get("userData").(*middlewares.JWTCustomClaims)
+func (c Carts) Create(ctx fiber.Ctx) error {
+	userData := ctx.Locals("userData").(*middlewares.JWTCustomClaims)
 	userID := userData.ID
 
-	cartReq := ctx.Get("validatedBody").(*carts.CartRequest)
+	cartReq := ctx.Locals("validatedBody").(*carts.CartRequest)
 	cartReq.UserID = uint(userID)
 
-	cart, err := c.carts.Create(ctx.Request().Context(), cartReq)
+	cart, err := c.carts.Create(ctx.Context(), cartReq)
 
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, dtos.Response[any]{
+		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "add book to the cart failed",
 		})
 	}
 
-	return ctx.JSON(http.StatusCreated, dtos.Response[carts.Cart]{
+	return ctx.Status(http.StatusCreated).JSON(dtos.Response[carts.Cart]{
 		Status:  "success",
 		Message: "book added to the cart",
 		Data:    cart,
 	})
 }
 
-func (c Carts) Update(ctx *echo.Context) error {
-	param := ctx.Param("id")
+func (c Carts) Update(ctx fiber.Ctx) error {
+	param := ctx.Params("id")
 
 	id, err := strconv.ParseUint(param, 10, 64)
 
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, dtos.Response[any]{
+		return ctx.Status(http.StatusBadRequest).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "invalid id",
 		})
 	}
 
-	userData := ctx.Get("userData").(*middlewares.JWTCustomClaims)
+	userData := ctx.Locals("userData").(*middlewares.JWTCustomClaims)
 	userID := userData.ID
 
-	cartReq := ctx.Get("validatedBody").(*carts.CartRequest)
+	cartReq := ctx.Locals("validatedBody").(*carts.CartRequest)
 	cartReq.UserID = uint(userID)
 
-	cart, err := c.carts.Update(ctx.Request().Context(), cartReq, uint(id))
+	cart, err := c.carts.Update(ctx.Context(), cartReq, uint(id))
 
 	if err != nil {
-		return ctx.JSON(http.StatusNotFound, dtos.Response[any]{
+		return ctx.Status(http.StatusNotFound).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "update cart failed",
 		})
 	}
 
-	return ctx.JSON(http.StatusOK, dtos.Response[carts.Cart]{
+	return ctx.Status(http.StatusOK).JSON(dtos.Response[carts.Cart]{
 		Status:  "success",
 		Message: "cart updated",
 		Data:    cart,
 	})
 }
 
-func (c Carts) Delete(ctx *echo.Context) error {
-	param := ctx.Param("id")
+func (c Carts) Delete(ctx fiber.Ctx) error {
+	param := ctx.Params("id")
 
 	id, err := strconv.ParseUint(param, 10, 64)
 
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, dtos.Response[any]{
+		return ctx.Status(http.StatusBadRequest).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "invalid id",
 		})
 	}
 
-	userData := ctx.Get("userData").(*middlewares.JWTCustomClaims)
+	userData := ctx.Locals("userData").(*middlewares.JWTCustomClaims)
 	userID := userData.ID
 
-	userCtx := context.WithValue(ctx.Request().Context(), "userID", userID)
-	req := ctx.Request().WithContext(userCtx)
-	ctx.SetRequest(req)
+	cartsCtx := context.WithValue(ctx.Context(), "userID", userID)
 
-	err = c.carts.Delete(ctx.Request().Context(), uint(id))
+	err = c.carts.Delete(cartsCtx, uint(id))
 
 	if err != nil {
-		return ctx.JSON(http.StatusNotFound, dtos.Response[any]{
+		return ctx.Status(http.StatusNotFound).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "cart not found",
 		})
 	}
 
-	return ctx.JSON(http.StatusOK, dtos.Response[any]{
+	return ctx.Status(http.StatusOK).JSON(dtos.Response[any]{
 		Status:  "success",
 		Message: "book removed from the cart",
 	})

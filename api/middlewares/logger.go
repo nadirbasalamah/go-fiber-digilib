@@ -1,14 +1,14 @@
 package middlewares
 
 import (
-	"github.com/labstack/echo/v5"
-	"github.com/labstack/echo/v5/middleware"
+	zapMiddleware "github.com/gofiber/contrib/v3/zap"
+	"github.com/gofiber/fiber/v3"
 )
 
 type LoggerConfig struct {
-	Config middleware.RequestLoggerConfig
+	Config zapMiddleware.Config
 }
 
-func (c *LoggerConfig) Init() echo.MiddlewareFunc {
-	return middleware.RequestLoggerWithConfig(c.Config)
+func (c *LoggerConfig) Init() fiber.Handler {
+	return zapMiddleware.New(c.Config)
 }

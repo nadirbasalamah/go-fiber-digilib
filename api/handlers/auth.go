@@ -8,7 +8,7 @@ import (
 	"go-fiber-digilib/pkg/utils"
 	"net/http"
 
-	"github.com/labstack/echo/v5"
+	"github.com/gofiber/fiber/v3"
 )
 
 type Auth struct {
@@ -16,62 +16,62 @@ type Auth struct {
 	jwtConfig middlewares.JWTConfig
 }
 
-func (a Auth) Register(ctx *echo.Context) error {
+func (a Auth) Register(ctx fiber.Ctx) error {
 	registerReq := new(auth.RegisterRequest)
 
-	if err := ctx.Bind(registerReq); err != nil {
-		return ctx.JSON(http.StatusBadRequest, dtos.Response[any]{
+	if err := ctx.Bind().JSON(registerReq); err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "invalid request",
 		})
 	}
 
-	if err := ctx.Validate(registerReq); err != nil {
-		return ctx.JSON(http.StatusUnprocessableEntity, dtos.Response[any]{
+	if err := utils.ValidateStruct(registerReq); err != nil {
+		return ctx.Status(http.StatusUnprocessableEntity).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "validation failed",
 			Data:    utils.GetValidationErrMessages(err.Error()),
 		})
 	}
 
-	user, err := a.auth.Register(ctx.Request().Context(), registerReq)
+	user, err := a.auth.Register(ctx.Context(), registerReq)
 
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, dtos.Response[any]{
+		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "user regsitration failed",
 		})
 	}
 
-	return ctx.JSON(http.StatusCreated, dtos.Response[auth.User]{
+	return ctx.Status(http.StatusCreated).JSON(dtos.Response[auth.User]{
 		Status:  "success",
 		Message: "user registered",
 		Data:    user,
 	})
 }
 
-func (a Auth) Login(ctx *echo.Context) error {
+func (a Auth) Login(ctx fiber.Ctx) error {
 	loginReq := new(auth.LoginRequest)
 
-	if err := ctx.Bind(loginReq); err != nil {
-		return ctx.JSON(http.StatusBadRequest, dtos.Response[any]{
+	if err := ctx.Bind().JSON(loginReq); err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "invalid request",
 		})
 	}
 
-	if err := ctx.Validate(loginReq); err != nil {
-		return ctx.JSON(http.StatusUnprocessableEntity, dtos.Response[any]{
+	if err := utils.ValidateStruct(loginReq); err != nil {
+		return ctx.Status(http.StatusUnprocessableEntity).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "validation failed",
 			Data:    utils.GetValidationErrMessages(err.Error()),
 		})
 	}
 
-	user, err := a.auth.Login(ctx.Request().Context(), loginReq)
+	user, err := a.auth.Login(ctx.Context(), loginReq)
 
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, dtos.Response[any]{
+		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "user login failed",
 		})
@@ -80,13 +80,13 @@ func (a Auth) Login(ctx *echo.Context) error {
 	token, err := a.jwtConfig.GenerateToken(int(user.ID), models.Role(user.Role))
 
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, dtos.Response[any]{
+		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "token generation failed",
 		})
 	}
 
-	return ctx.JSON(http.StatusOK, dtos.Response[string]{
+	return ctx.Status(http.StatusOK).JSON(dtos.Response[string]{
 		Status:  "success",
 		Message: "login success",
 		Data:    token,

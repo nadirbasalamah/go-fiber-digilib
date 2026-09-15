@@ -14,7 +14,7 @@ import (
 
 	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
-	"github.com/labstack/echo/v5"
+	"github.com/gofiber/fiber/v3"
 )
 
 type Books struct {
@@ -23,11 +23,11 @@ type Books struct {
 	cld            *cloudinary.Cloudinary
 }
 
-func (b Books) GetAll(ctx *echo.Context) error {
-	page, _ := strconv.Atoi(ctx.QueryParam("page"))
-	limit, _ := strconv.Atoi(ctx.QueryParam("limit"))
-	sort := ctx.QueryParam("sort")
-	search := ctx.QueryParam("search")
+func (b Books) GetAll(ctx fiber.Ctx) error {
+	page, _ := strconv.Atoi(ctx.Query("page"))
+	limit, _ := strconv.Atoi(ctx.Query("limit"))
+	sort := ctx.Query("sort")
+	search := ctx.Query("search")
 
 	pagination := utils.Pagination{
 		Page:    page,
@@ -37,55 +37,55 @@ func (b Books) GetAll(ctx *echo.Context) error {
 		Keyword: "title",
 	}
 
-	booksData, err := b.books.GetAll(ctx.Request().Context(), pagination)
+	booksData, err := b.books.GetAll(ctx.Context(), pagination)
 
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, dtos.Response[any]{
+		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "fetch books failed",
 		})
 	}
 
-	return ctx.JSON(http.StatusOK, dtos.Response[utils.Pagination]{
+	return ctx.Status(http.StatusOK).JSON(dtos.Response[utils.Pagination]{
 		Status:  "success",
 		Message: "all books",
 		Data:    booksData,
 	})
 }
 
-func (b Books) GetByID(ctx *echo.Context) error {
-	param := ctx.Param("id")
+func (b Books) GetByID(ctx fiber.Ctx) error {
+	param := ctx.Params("id")
 
 	id, err := strconv.ParseUint(param, 10, 64)
 
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, dtos.Response[any]{
+		return ctx.Status(http.StatusBadRequest).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "invalid id",
 		})
 	}
 
-	book, err := b.books.GetByID(ctx.Request().Context(), uint(id))
+	book, err := b.books.GetByID(ctx.Context(), uint(id))
 
 	if err != nil {
-		return ctx.JSON(http.StatusNotFound, dtos.Response[any]{
+		return ctx.Status(http.StatusNotFound).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "book not found",
 		})
 	}
 
-	return ctx.JSON(http.StatusOK, dtos.Response[books.Book]{
+	return ctx.Status(http.StatusOK).JSON(dtos.Response[books.Book]{
 		Status:  "success",
 		Message: "book found",
 		Data:    book,
 	})
 }
 
-func (b Books) GetByCategory(ctx *echo.Context) error {
-	page, _ := strconv.Atoi(ctx.QueryParam("page"))
-	limit, _ := strconv.Atoi(ctx.QueryParam("limit"))
-	sort := ctx.QueryParam("sort")
-	search := ctx.QueryParam("search")
+func (b Books) GetByCategory(ctx fiber.Ctx) error {
+	page, _ := strconv.Atoi(ctx.Query("page"))
+	limit, _ := strconv.Atoi(ctx.Query("limit"))
+	sort := ctx.Query("sort")
+	search := ctx.Query("search")
 
 	pagination := utils.Pagination{
 		Page:    page,
@@ -95,39 +95,39 @@ func (b Books) GetByCategory(ctx *echo.Context) error {
 		Keyword: "title",
 	}
 
-	param := ctx.Param("id")
+	param := ctx.Params("id")
 
 	categoryId, err := strconv.ParseUint(param, 10, 64)
 
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, dtos.Response[any]{
+		return ctx.Status(http.StatusBadRequest).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "invalid id",
 		})
 	}
 
-	booksData, err := b.books.GetByCategory(ctx.Request().Context(), pagination, uint(categoryId))
+	booksData, err := b.books.GetByCategory(ctx.Context(), pagination, uint(categoryId))
 
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, dtos.Response[any]{
+		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "fetch books failed",
 		})
 	}
 
-	return ctx.JSON(http.StatusOK, dtos.Response[utils.Pagination]{
+	return ctx.Status(http.StatusOK).JSON(dtos.Response[utils.Pagination]{
 		Status:  "success",
 		Message: "all books by category",
 		Data:    booksData,
 	})
 }
 
-func (b Books) Create(ctx *echo.Context) error {
-	bookReq := ctx.Get("validatedBody").(*books.BookRequest)
+func (b Books) Create(ctx fiber.Ctx) error {
+	bookReq := ctx.Locals("validatedBody").(*books.BookRequest)
 
 	file, err := ctx.FormFile("file")
 	if err != nil {
-		return ctx.JSON(http.StatusUnprocessableEntity, dtos.Response[any]{
+		return ctx.Status(http.StatusUnprocessableEntity).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "file not found",
 		})
@@ -138,7 +138,7 @@ func (b Books) Create(ctx *echo.Context) error {
 	isFileValid := utils.ValidateFile(ext)
 
 	if !isFileValid {
-		return ctx.JSON(http.StatusUnprocessableEntity, dtos.Response[any]{
+		return ctx.Status(http.StatusUnprocessableEntity).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "invalid file format",
 		})
@@ -150,10 +150,10 @@ func (b Books) Create(ctx *echo.Context) error {
 		Options: uploader.UploadParams{},
 	}
 
-	fileLink, err := uploaderCfg.UploadFile(ctx.Request().Context())
+	fileLink, err := uploaderCfg.UploadFile(ctx.Context())
 
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, dtos.Response[any]{
+		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "upload failed",
 		})
@@ -161,39 +161,39 @@ func (b Books) Create(ctx *echo.Context) error {
 
 	bookReq.ImageLink = fileLink
 
-	book, err := b.books.Create(ctx.Request().Context(), bookReq)
+	book, err := b.books.Create(ctx.Context(), bookReq)
 
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, dtos.Response[any]{
+		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "create book failed",
 		})
 	}
 
-	return ctx.JSON(http.StatusCreated, dtos.Response[books.Book]{
+	return ctx.Status(http.StatusCreated).JSON(dtos.Response[books.Book]{
 		Status:  "success",
 		Message: "book created",
 		Data:    book,
 	})
 }
 
-func (b Books) Update(ctx *echo.Context) error {
-	param := ctx.Param("id")
+func (b Books) Update(ctx fiber.Ctx) error {
+	param := ctx.Params("id")
 
 	id, err := strconv.ParseUint(param, 10, 64)
 
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, dtos.Response[any]{
+		return ctx.Status(http.StatusBadRequest).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "invalid id",
 		})
 	}
 
-	bookReq := ctx.Get("validatedBody").(*books.BookRequest)
+	bookReq := ctx.Locals("validatedBody").(*books.BookRequest)
 
 	file, err := ctx.FormFile("file")
 	if err != nil {
-		return ctx.JSON(http.StatusUnprocessableEntity, dtos.Response[any]{
+		return ctx.Status(http.StatusUnprocessableEntity).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "file not found",
 		})
@@ -204,7 +204,7 @@ func (b Books) Update(ctx *echo.Context) error {
 	isFileValid := utils.ValidateFile(ext)
 
 	if !isFileValid {
-		return ctx.JSON(http.StatusUnprocessableEntity, dtos.Response[any]{
+		return ctx.Status(http.StatusUnprocessableEntity).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "invalid file format",
 		})
@@ -216,10 +216,10 @@ func (b Books) Update(ctx *echo.Context) error {
 		Options: uploader.UploadParams{},
 	}
 
-	fileLink, err := uploaderCfg.UploadFile(ctx.Request().Context())
+	fileLink, err := uploaderCfg.UploadFile(ctx.Context())
 
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, dtos.Response[any]{
+		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "upload failed",
 		})
@@ -227,51 +227,51 @@ func (b Books) Update(ctx *echo.Context) error {
 
 	bookReq.ImageLink = fileLink
 
-	book, err := b.books.Update(ctx.Request().Context(), bookReq, uint(id))
+	book, err := b.books.Update(ctx.Context(), bookReq, uint(id))
 
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, dtos.Response[any]{
+		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "update book failed",
 		})
 	}
 
-	return ctx.JSON(http.StatusOK, dtos.Response[books.Book]{
+	return ctx.Status(http.StatusOK).JSON(dtos.Response[books.Book]{
 		Status:  "success",
 		Message: "book updated",
 		Data:    book,
 	})
 }
 
-func (b Books) Delete(ctx *echo.Context) error {
-	param := ctx.Param("id")
+func (b Books) Delete(ctx fiber.Ctx) error {
+	param := ctx.Params("id")
 
 	id, err := strconv.ParseUint(param, 10, 64)
 
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, dtos.Response[any]{
+		return ctx.Status(http.StatusBadRequest).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "invalid id",
 		})
 	}
 
-	err = b.books.Delete(ctx.Request().Context(), uint(id))
+	err = b.books.Delete(ctx.Context(), uint(id))
 
 	if err != nil {
-		return ctx.JSON(http.StatusNotFound, dtos.Response[any]{
+		return ctx.Status(http.StatusNotFound).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "book not found",
 		})
 	}
 
-	return ctx.JSON(http.StatusOK, dtos.Response[any]{
+	return ctx.Status(http.StatusOK).JSON(dtos.Response[any]{
 		Status:  "success",
 		Message: "book deleted",
 	})
 }
 
-func (b Books) GetBookRecommendation(ctx *echo.Context) error {
-	recommReq := ctx.Get("validatedBody").(*ai.BookRecommendationRequest)
+func (b Books) GetBookRecommendation(ctx fiber.Ctx) error {
+	recommReq := ctx.Locals("validatedBody").(*ai.BookRecommendationRequest)
 
 	req := ai.BookRecommendationRequest{
 		Quantity: recommReq.Quantity,
@@ -281,7 +281,7 @@ func (b Books) GetBookRecommendation(ctx *echo.Context) error {
 	res, err := b.recommendation.GetBookRecommendation(req)
 
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, dtos.Response[any]{
+		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "get book recommendation failed. Please retry soon",
 		})
@@ -294,13 +294,13 @@ func (b Books) GetBookRecommendation(ctx *echo.Context) error {
 	err = json.Unmarshal([]byte(resBody), &recommendations)
 
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, dtos.Response[any]{
+		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "get book recommendation failed. Invalid response",
 		})
 	}
 
-	return ctx.JSON(http.StatusOK, dtos.Response[[]ai.BookRecommendationResponse]{
+	return ctx.Status(http.StatusOK).JSON(dtos.Response[[]ai.BookRecommendationResponse]{
 		Status:  "success",
 		Message: "book recommendations",
 		Data:    recommendations,

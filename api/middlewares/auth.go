@@ -1,15 +1,14 @@
 package middlewares
 
 import (
-	"context"
 	"errors"
 	"go-fiber-digilib/db/models"
+	"go-fiber-digilib/pkg/utils"
 	"net/http"
-	"time"
 
+	jwtware "github.com/gofiber/contrib/v3/jwt"
+	"github.com/gofiber/fiber/v3"
 	"github.com/golang-jwt/jwt/v5"
-	echojwt "github.com/labstack/echo-jwt/v5"
-	"github.com/labstack/echo/v5"
 )
 
 type JWTCustomClaims struct {
@@ -27,44 +26,51 @@ type contextKey string
 
 const userContextKey = contextKey("user")
 
-func (jwtCfg *JWTConfig) Init() echojwt.Config {
-	return echojwt.Config{
-		NewClaimsFunc: func(c *echo.Context) jwt.Claims {
-			return new(JWTCustomClaims)
-		},
-		SigningKey: []byte(jwtCfg.SecretKey),
-	}
+// TODO: repair this auth middleware
+
+func Protected() fiber.Handler {
+	return jwtware.New(jwtware.Config{
+		SigningKey:   jwtware.SigningKey{Key: []byte(utils.GetConfig("JWT_SECRET_KEY"))},
+		ErrorHandler: jwtError,
+	})
 }
 
-func (jwtCfg *JWTConfig) GenerateToken(userID int, role models.Role) (string, error) {
-	expire := jwt.NewNumericDate(time.Now().Local().Add(time.Minute * time.Duration(int64(jwtCfg.ExpiresDuration))))
-
-	claims := &JWTCustomClaims{
-		ID: userID,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: expire,
-		},
-		Role: role,
+func jwtError(c fiber.Ctx, err error) error {
+	if err.Error() == "Missing or malformed JWT" {
+		return c.Status(fiber.StatusBadRequest).
+			JSON(fiber.Map{"status": "error", "message": "Missing or malformed JWT", "data": nil})
 	}
-
-	rawToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	token, err := rawToken.SignedString([]byte(jwtCfg.SecretKey))
-
-	if err != nil {
-		return "", err
-	}
-
-	return token, nil
+	return c.Status(fiber.StatusUnauthorized).
+		JSON(fiber.Map{"status": "error", "message": "Invalid or expired JWT", "data": nil})
 }
 
-func GetUser(ctx context.Context) (*JWTCustomClaims, error) {
-	user, ok := ctx.Value(userContextKey).(*jwt.Token)
+// func (jwtCfg *JWTConfig) GenerateToken(userID int, role models.Role) (string, error) {
+// 	expire := jwt.NewNumericDate(time.Now().Local().Add(time.Minute * time.Duration(int64(jwtCfg.ExpiresDuration))))
+
+// 	claims := &JWTCustomClaims{
+// 		ID:        userID,
+// 		ExpiresAt: expire,
+// 		Role:      role,
+// 	}
+
+// 	rawToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+// 	token, err := rawToken.SignedString([]byte(jwtCfg.SecretKey))
+
+// 	if err != nil {
+// 		return "", err
+// 	}
+
+// 	return token, nil
+// }
+
+func GetUser(c fiber.Ctx) (jwt.MapClaims, error) {
+	user, ok := c.Locals(userContextKey).(*jwt.Token)
 	if !ok || user == nil {
 		return nil, errors.New("invalid token")
 	}
 
-	claims, ok := user.Claims.(*JWTCustomClaims)
+	claims, ok := user.Claims.(jwt.MapClaims)
 	if !ok {
 		return nil, errors.New("invalid claims")
 	}
@@ -72,58 +78,103 @@ func GetUser(ctx context.Context) (*JWTCustomClaims, error) {
 	return claims, nil
 }
 
-func GetUserID(ctx context.Context) (int, error) {
-	claim, err := GetUser(ctx)
+func GetUserID(c fiber.Ctx) (int, error) {
+	claim, err := GetUser(c)
 
 	if err != nil {
 		return 0, errors.New("invalid token")
 	}
 
-	return claim.ID, nil
+	return claim["id"], nil
 }
 
-func VerifyToken(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c *echo.Context) error {
-		user := c.Get("user").(*jwt.Token)
+func VerifyToken() fiber.Handler {
+	return func(c fiber.Ctx) error {
+		user := c.Locals("user").(*jwt.Token)
 
 		if user == nil {
-			return c.JSON(http.StatusUnauthorized, map[string]string{
+			return c.Status(http.StatusUnauthorized).JSON(fiber.Map{
 				"message": "invalid token",
 			})
 		}
 
-		ctx := context.WithValue(c.Request().Context(), userContextKey, user)
-		c.SetRequest(c.Request().WithContext(ctx))
+		c.Locals(userContextKey, user)
 
-		userData, err := GetUser(ctx)
+		userData, err := GetUser(c)
 		if userData == nil || err != nil {
-			return c.JSON(http.StatusUnauthorized, map[string]string{
+			return c.Status(http.StatusUnauthorized).JSON(fiber.Map{
 				"message": "invalid token",
 			})
 		}
 
-		c.Set("userData", userData)
+		c.Locals("userData", userData)
 
-		return next(c)
+		return c.Next()
 	}
 }
 
-func VerifyAdmin(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c *echo.Context) error {
-		user, err := GetUser(c.Request().Context())
+func VerifyAdmin() fiber.Handler {
+	return func(c fiber.Ctx) error {
+		user, err := GetUser(c)
 
 		if err != nil {
-			return c.JSON(http.StatusUnauthorized, map[string]string{
+			return c.Status(http.StatusUnauthorized).JSON(fiber.Map{
 				"message": "invalid token",
 			})
 		}
 
-		if user.Role != models.Admin {
-			return c.JSON(http.StatusForbidden, map[string]string{
+		if user["role"] != models.Admin {
+			return c.Status(http.StatusForbidden).JSON(fiber.Map{
 				"message": "access denied",
 			})
 		}
 
-		return next(c)
+		return c.Next()
 	}
 }
+
+// func VerifyToken(next echo.HandlerFunc) echo.HandlerFunc {
+// 	return func(c *echo.Context) error {
+// 		user := c.Get("user").(*jwt.Token)
+
+// 		if user == nil {
+// 			return c.JSON(http.StatusUnauthorized, map[string]string{
+// 				"message": "invalid token",
+// 			})
+// 		}
+
+// 		ctx := context.WithValue(c.Request().Context(), userContextKey, user)
+// 		c.SetRequest(c.Request().WithContext(ctx))
+
+// 		userData, err := GetUser(ctx)
+// 		if userData == nil || err != nil {
+// 			return c.JSON(http.StatusUnauthorized, map[string]string{
+// 				"message": "invalid token",
+// 			})
+// 		}
+
+// 		c.Set("userData", userData)
+
+// 		return next(c)
+// 	}
+// }
+
+// func VerifyAdmin(next echo.HandlerFunc) echo.HandlerFunc {
+// 	return func(c *echo.Context) error {
+// 		user, err := GetUser(c.Request().Context())
+
+// 		if err != nil {
+// 			return c.JSON(http.StatusUnauthorized, map[string]string{
+// 				"message": "invalid token",
+// 			})
+// 		}
+
+// 		if user.Role != models.Admin {
+// 			return c.JSON(http.StatusForbidden, map[string]string{
+// 				"message": "access denied",
+// 			})
+// 		}
+
+// 		return next(c)
+// 	}
+// }

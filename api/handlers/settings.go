@@ -6,149 +6,149 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/labstack/echo/v5"
+	"github.com/gofiber/fiber/v3"
 )
 
 type Settings struct {
 	settings settings.Service
 }
 
-func (s Settings) GetAll(ctx *echo.Context) error {
+func (s Settings) GetAll(ctx fiber.Ctx) error {
 
-	settingsData, err := s.settings.GetAll(ctx.Request().Context())
+	settingsData, err := s.settings.GetAll(ctx.Context())
 
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, dtos.Response[any]{
+		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "fetch settings failed",
 		})
 	}
 
-	return ctx.JSON(http.StatusOK, dtos.Response[[]settings.Setting]{
+	return ctx.Status(http.StatusOK).JSON(dtos.Response[[]settings.Setting]{
 		Status:  "success",
 		Message: "all settings",
 		Data:    settingsData,
 	})
 }
 
-func (s Settings) GetByID(ctx *echo.Context) error {
-	param := ctx.Param("id")
+func (s Settings) GetByID(ctx fiber.Ctx) error {
+	param := ctx.Params("id")
 
 	id, err := strconv.ParseUint(param, 10, 64)
 
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, dtos.Response[any]{
+		return ctx.Status(http.StatusBadRequest).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "invalid id",
 		})
 	}
 
-	setting, err := s.settings.GetByID(ctx.Request().Context(), uint(id))
+	setting, err := s.settings.GetByID(ctx.Context(), uint(id))
 
 	if err != nil {
-		return ctx.JSON(http.StatusNotFound, dtos.Response[any]{
+		return ctx.Status(http.StatusNotFound).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "setting not found",
 		})
 	}
 
-	return ctx.JSON(http.StatusOK, dtos.Response[settings.Setting]{
+	return ctx.Status(http.StatusOK).JSON(dtos.Response[settings.Setting]{
 		Status:  "success",
 		Message: "setting found",
 		Data:    setting,
 	})
 }
 
-func (s Settings) GetByKey(ctx *echo.Context) error {
-	param := ctx.Param("key")
+func (s Settings) GetByKey(ctx fiber.Ctx) error {
+	param := ctx.Params("key")
 
-	setting, err := s.settings.GetByKey(ctx.Request().Context(), param)
+	setting, err := s.settings.GetByKey(ctx.Context(), param)
 
 	if err != nil {
-		return ctx.JSON(http.StatusNotFound, dtos.Response[any]{
+		return ctx.Status(http.StatusNotFound).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "setting not found",
 		})
 	}
 
-	return ctx.JSON(http.StatusOK, dtos.Response[settings.Setting]{
+	return ctx.Status(http.StatusOK).JSON(dtos.Response[settings.Setting]{
 		Status:  "success",
 		Message: "setting found",
 		Data:    setting,
 	})
 }
 
-func (s Settings) Create(ctx *echo.Context) error {
-	settingReq := ctx.Get("validatedBody").(*settings.SettingRequest)
+func (s Settings) Create(ctx fiber.Ctx) error {
+	settingReq := ctx.Locals("validatedBody").(*settings.SettingRequest)
 
-	setting, err := s.settings.Create(ctx.Request().Context(), settingReq)
+	setting, err := s.settings.Create(ctx.Context(), settingReq)
 
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, dtos.Response[any]{
+		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "create setting failed",
 		})
 	}
 
-	return ctx.JSON(http.StatusCreated, dtos.Response[settings.Setting]{
+	return ctx.Status(http.StatusCreated).JSON(dtos.Response[settings.Setting]{
 		Status:  "success",
 		Message: "setting created",
 		Data:    setting,
 	})
 }
 
-func (s Settings) Update(ctx *echo.Context) error {
-	param := ctx.Param("id")
+func (s Settings) Update(ctx fiber.Ctx) error {
+	param := ctx.Params("id")
 
 	id, err := strconv.ParseUint(param, 10, 64)
 
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, dtos.Response[any]{
+		return ctx.Status(http.StatusBadRequest).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "invalid id",
 		})
 	}
 
-	settingReq := ctx.Get("validatedBody").(*settings.SettingRequest)
+	settingReq := ctx.Locals("validatedBody").(*settings.SettingRequest)
 
-	setting, err := s.settings.Update(ctx.Request().Context(), settingReq, uint(id))
+	setting, err := s.settings.Update(ctx.Context(), settingReq, uint(id))
 
 	if err != nil {
-		return ctx.JSON(http.StatusNotFound, dtos.Response[any]{
+		return ctx.Status(http.StatusNotFound).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "update setting failed",
 		})
 	}
 
-	return ctx.JSON(http.StatusOK, dtos.Response[settings.Setting]{
+	return ctx.Status(http.StatusOK).JSON(dtos.Response[settings.Setting]{
 		Status:  "success",
 		Message: "setting updated",
 		Data:    setting,
 	})
 }
 
-func (s Settings) Delete(ctx *echo.Context) error {
-	param := ctx.Param("id")
+func (s Settings) Delete(ctx fiber.Ctx) error {
+	param := ctx.Params("id")
 
 	id, err := strconv.ParseUint(param, 10, 64)
 
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, dtos.Response[any]{
+		return ctx.Status(http.StatusBadRequest).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "invalid id",
 		})
 	}
 
-	err = s.settings.Delete(ctx.Request().Context(), uint(id))
+	err = s.settings.Delete(ctx.Context(), uint(id))
 
 	if err != nil {
-		return ctx.JSON(http.StatusNotFound, dtos.Response[any]{
+		return ctx.Status(http.StatusNotFound).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "setting not found",
 		})
 	}
 
-	return ctx.JSON(http.StatusOK, dtos.Response[any]{
+	return ctx.Status(http.StatusOK).JSON(dtos.Response[any]{
 		Status:  "success",
 		Message: "setting deleted",
 	})

@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/labstack/echo/v5"
+	"github.com/gofiber/fiber/v3"
 )
 
 type CustomValidator struct {
@@ -53,32 +53,33 @@ func (cv *CustomValidator) Validate(i interface{}) error {
 	return nil
 }
 
-func ValidateBody(dto any) echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c *echo.Context) error {
-			dtoType := reflect.TypeOf(dto).Elem()
-			req := reflect.New(dtoType).Interface()
-
-			if err := c.Bind(req); err != nil {
-				return c.JSON(http.StatusBadRequest, dtos.Response[any]{
-					Status:  "failed",
-					Message: "invalid request body",
-					Data:    err.Error(),
-				})
-			}
-
-			if err := c.Validate(req); err != nil {
-				return c.JSON(http.StatusUnprocessableEntity, dtos.Response[any]{
-					Status:  "failed",
-					Message: "validation failed",
-					Data:    utils.GetValidationErrMessages(err.Error()),
-				})
-			}
-
-			c.Set("validatedBody", req)
-
-			return next(c)
+func ValidateBody(dto any) fiber.Handler {
+	return func(c fiber.Ctx) error {
+		customValidator := CustomValidator{
+			Validator: InitValidator(),
 		}
+		dtoType := reflect.TypeOf(dto).Elem()
+		req := reflect.New(dtoType).Interface()
+
+		if err := c.Bind().JSON(req); err != nil {
+			return c.Status(http.StatusBadRequest).JSON(dtos.Response[any]{
+				Status:  "failed",
+				Message: "invalid request body",
+				Data:    err.Error(),
+			})
+		}
+
+		if err := customValidator.Validate(req); err != nil {
+			return c.Status(http.StatusUnprocessableEntity).JSON(dtos.Response[any]{
+				Status:  "failed",
+				Message: "validation failed",
+				Data:    utils.GetValidationErrMessages(err.Error()),
+			})
+		}
+
+		c.Locals("validatedBody", req)
+
+		return c.Next()
 	}
 }
 

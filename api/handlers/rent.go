@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/labstack/echo/v5"
+	"github.com/gofiber/fiber/v3"
 )
 
 type Rents struct {
@@ -23,11 +23,11 @@ type Rents struct {
 	roService rajaongkir.Service
 }
 
-func (r Rents) GetAll(ctx *echo.Context) error {
-	page, _ := strconv.Atoi(ctx.QueryParam("page"))
-	limit, _ := strconv.Atoi(ctx.QueryParam("limit"))
-	sort := ctx.QueryParam("sort")
-	search := ctx.QueryParam("search")
+func (r Rents) GetAll(ctx fiber.Ctx) error {
+	page, _ := strconv.Atoi(ctx.Query("page"))
+	limit, _ := strconv.Atoi(ctx.Query("limit"))
+	sort := ctx.Query("sort")
+	search := ctx.Query("search")
 
 	pagination := utils.Pagination{
 		Page:    page,
@@ -37,62 +37,62 @@ func (r Rents) GetAll(ctx *echo.Context) error {
 		Keyword: "users.username",
 	}
 
-	booksData, err := r.rents.GetAll(ctx.Request().Context(), pagination)
+	booksData, err := r.rents.GetAll(ctx.Context(), pagination)
 
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, dtos.Response[any]{
+		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "fetch book rents failed",
 		})
 	}
 
-	return ctx.JSON(http.StatusOK, dtos.Response[utils.Pagination]{
+	return ctx.Status(http.StatusOK).JSON(dtos.Response[utils.Pagination]{
 		Status:  "success",
 		Message: "all book rents",
 		Data:    booksData,
 	})
 }
 
-func (r Rents) GetByUser(ctx *echo.Context) error {
-	userData := ctx.Get("userData").(*middlewares.JWTCustomClaims)
+func (r Rents) GetByUser(ctx fiber.Ctx) error {
+	userData := ctx.Locals("userData").(*middlewares.JWTCustomClaims)
 	userID := userData.ID
 
-	rentsData, err := r.rents.GetByUser(ctx.Request().Context(), uint(userID))
+	rentsData, err := r.rents.GetByUser(ctx.Context(), uint(userID))
 
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, dtos.Response[any]{
+		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "fetch rents failed",
 		})
 	}
 
-	return ctx.JSON(http.StatusOK, dtos.Response[[]rents.UserRent]{
+	return ctx.Status(http.StatusOK).JSON(dtos.Response[[]rents.UserRent]{
 		Status:  "success",
 		Message: "all rents",
 		Data:    rentsData,
 	})
 }
 
-func (r Rents) Create(ctx *echo.Context) error {
-	userData := ctx.Get("userData").(*middlewares.JWTCustomClaims)
+func (r Rents) Create(ctx fiber.Ctx) error {
+	userData := ctx.Locals("userData").(*middlewares.JWTCustomClaims)
 	userID := userData.ID
 
-	userRecord, err := r.users.GetProfile(ctx.Request().Context(), uint(userID))
+	userRecord, err := r.users.GetProfile(ctx.Context(), uint(userID))
 
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, dtos.Response[any]{
+		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "failed to retrieve user data",
 		})
 	}
 
-	rentReq := ctx.Get("validatedBody").(*rents.RentRequest)
+	rentReq := ctx.Locals("validatedBody").(*rents.RentRequest)
 	rentReq.UserID = uint(userID)
 
-	setting, err := r.settings.GetByKey(ctx.Request().Context(), constant.DISTRICT_ID)
+	setting, err := r.settings.GetByKey(ctx.Context(), constant.DISTRICT_ID)
 
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, dtos.Response[any]{
+		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "failed to retrieve origin",
 		})
@@ -108,7 +108,7 @@ func (r Rents) Create(ctx *echo.Context) error {
 	})
 
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, dtos.Response[any]{
+		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "failed to calculate fee",
 		})
@@ -117,74 +117,74 @@ func (r Rents) Create(ctx *echo.Context) error {
 	rentReq.ReturnTime = time.Now().AddDate(0, 0, int(rentReq.Duration))
 	rentReq.Fee = fee
 
-	rent, err := r.rents.Create(ctx.Request().Context(), rentReq)
+	rent, err := r.rents.Create(ctx.Context(), rentReq)
 
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, dtos.Response[any]{
+		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "add book to the rent failed",
 		})
 	}
 
-	return ctx.JSON(http.StatusCreated, dtos.Response[rents.Rent]{
+	return ctx.Status(http.StatusCreated).JSON(dtos.Response[rents.Rent]{
 		Status:  "success",
 		Message: "book added to the rent",
 		Data:    rent,
 	})
 }
 
-func (r Rents) Update(ctx *echo.Context) error {
-	param := ctx.Param("id")
+func (r Rents) Update(ctx fiber.Ctx) error {
+	param := ctx.Params("id")
 
 	id, err := strconv.ParseUint(param, 10, 64)
 
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, dtos.Response[any]{
+		return ctx.Status(http.StatusBadRequest).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "invalid id",
 		})
 	}
 
-	rentReq := ctx.Get("validatedBody").(*rents.RentUpdateRequest)
+	rentReq := ctx.Locals("validatedBody").(*rents.RentUpdateRequest)
 
-	rent, err := r.rents.Update(ctx.Request().Context(), rentReq, uint(id))
+	rent, err := r.rents.Update(ctx.Context(), rentReq, uint(id))
 
 	if err != nil {
-		return ctx.JSON(http.StatusNotFound, dtos.Response[any]{
+		return ctx.Status(http.StatusNotFound).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "update rent failed",
 		})
 	}
 
-	return ctx.JSON(http.StatusOK, dtos.Response[rents.Rent]{
+	return ctx.Status(http.StatusOK).JSON(dtos.Response[rents.Rent]{
 		Status:  "success",
 		Message: "rent updated",
 		Data:    rent,
 	})
 }
 
-func (r Rents) Delete(ctx *echo.Context) error {
-	param := ctx.Param("id")
+func (r Rents) Delete(ctx fiber.Ctx) error {
+	param := ctx.Params("id")
 
 	id, err := strconv.ParseUint(param, 10, 64)
 
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, dtos.Response[any]{
+		return ctx.Status(http.StatusBadRequest).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "invalid id",
 		})
 	}
 
-	err = r.rents.Delete(ctx.Request().Context(), uint(id))
+	err = r.rents.Delete(ctx.Context(), uint(id))
 
 	if err != nil {
-		return ctx.JSON(http.StatusNotFound, dtos.Response[any]{
+		return ctx.Status(http.StatusNotFound).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "rent not found",
 		})
 	}
 
-	return ctx.JSON(http.StatusOK, dtos.Response[any]{
+	return ctx.Status(http.StatusOK).JSON(dtos.Response[any]{
 		Status:  "success",
 		Message: "book rent removed",
 	})
