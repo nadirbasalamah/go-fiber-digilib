@@ -21,7 +21,7 @@ type Users struct {
 }
 
 func (u Users) GetProfile(ctx fiber.Ctx) error {
-	userID, err := middlewares.GetUserID(ctx.Context())
+	userID, err := middlewares.GetUserID(ctx)
 
 	if err != nil {
 		return ctx.Status(http.StatusUnauthorized).JSON(dtos.Response[any]{
@@ -47,7 +47,7 @@ func (u Users) GetProfile(ctx fiber.Ctx) error {
 }
 
 func (u Users) EditProfile(ctx fiber.Ctx) error {
-	userID, err := middlewares.GetUserID(ctx.Context())
+	userID, err := middlewares.GetUserID(ctx)
 
 	if err != nil {
 		return ctx.Status(http.StatusUnauthorized).JSON(dtos.Response[any]{
@@ -58,7 +58,7 @@ func (u Users) EditProfile(ctx fiber.Ctx) error {
 
 	editReq := new(usersPkg.EditProfileRequest)
 
-	if err := ctx.Bind().JSON(editReq); err != nil {
+	if err := ctx.Bind().All(editReq); err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(dtos.Response[any]{
 			Status:  "failed",
 			Message: "invalid request",

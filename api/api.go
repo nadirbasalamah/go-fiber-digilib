@@ -56,7 +56,8 @@ func NewApp(repository *gorm.DB, cld *cloudinary.Cloudinary, jwtConfig middlewar
 	logMiddleware := middlewares.LoggerConfig{Config: zapMiddleware.Config{
 		Logger: logger,
 	}}
-	// jwtMiddleware := jwtConfig.Init()
+
+	jwtMiddleware := jwtConfig.Init()
 
 	app.Use(logMiddleware.Init())
 	app.Use(helmet.New())
@@ -66,46 +67,46 @@ func NewApp(repository *gorm.DB, cld *cloudinary.Cloudinary, jwtConfig middlewar
 	authRoutes.Post("/register", authHandler.Register)
 	authRoutes.Post("/login", authHandler.Login)
 
-	userRoutes := app.Group("/api/v1", middlewares.Protected(), middlewares.VerifyToken)
+	userRoutes := app.Group("/api/v1", jwtMiddleware, middlewares.VerifyToken())
 
 	userRoutes.Get("/profile", usersHandler.GetProfile)
-	userRoutes.Put("/profile/edit", usersHandler.EditProfile)
+	userRoutes.Patch("/profile/edit", usersHandler.EditProfile)
 
-	categoryRoutes := app.Group("/api/v1", middlewares.Protected(), middlewares.VerifyToken)
+	categoryRoutes := app.Group("/api/v1", jwtMiddleware, middlewares.VerifyToken())
 	categoryRoutes.Get("/categories", categoriesHandler.GetAll)
 	categoryRoutes.Get("/categories/:id", categoriesHandler.GetByID)
-	categoryRoutes.Post("/categories", middlewares.VerifyAdmin, middlewares.ValidateBody(&categories.CategoryRequest{}), categoriesHandler.Create)
-	categoryRoutes.Put("/categories/:id", middlewares.VerifyAdmin, middlewares.ValidateBody(&categories.CategoryRequest{}), categoriesHandler.Update)
-	categoryRoutes.Delete("/categories/:id", middlewares.VerifyAdmin, categoriesHandler.Delete)
+	categoryRoutes.Post("/categories", middlewares.VerifyAdmin(), middlewares.ValidateBody(&categories.CategoryRequest{}), categoriesHandler.Create)
+	categoryRoutes.Patch("/categories/:id", middlewares.VerifyAdmin(), middlewares.ValidateBody(&categories.CategoryRequest{}), categoriesHandler.Update)
+	categoryRoutes.Delete("/categories/:id", middlewares.VerifyAdmin(), categoriesHandler.Delete)
 
-	bookRoutes := app.Group("/api/v1", middlewares.Protected(), middlewares.VerifyToken)
+	bookRoutes := app.Group("/api/v1", jwtMiddleware, middlewares.VerifyToken())
 	bookRoutes.Get("/books", booksHandler.GetAll)
 	bookRoutes.Get("/books/:id", booksHandler.GetByID)
 	bookRoutes.Get("/books/category/:id", booksHandler.GetByCategory)
-	bookRoutes.Post("/books", middlewares.VerifyAdmin, middlewares.ValidateBody(&books.BookRequest{}), booksHandler.Create)
-	bookRoutes.Put("/books/:id", middlewares.VerifyAdmin, middlewares.ValidateBody(&books.BookRequest{}), booksHandler.Update)
-	bookRoutes.Delete("/books/:id", middlewares.VerifyAdmin, booksHandler.Delete)
+	bookRoutes.Post("/books", middlewares.VerifyAdmin(), middlewares.ValidateBody(&books.BookRequest{}), booksHandler.Create)
+	bookRoutes.Patch("/books/:id", middlewares.VerifyAdmin(), middlewares.ValidateBody(&books.BookRequest{}), booksHandler.Update)
+	bookRoutes.Delete("/books/:id", middlewares.VerifyAdmin(), booksHandler.Delete)
 	bookRoutes.Post("/books/recommendations", middlewares.ValidateBody(&ai.BookRecommendationRequest{}), booksHandler.GetBookRecommendation)
 
-	cartRoutes := app.Group("/api/v1", middlewares.Protected(), middlewares.VerifyToken)
+	cartRoutes := app.Group("/api/v1", jwtMiddleware, middlewares.VerifyToken())
 	cartRoutes.Get("/carts/user", cartsHandler.GetByUser)
 	cartRoutes.Post("/carts", middlewares.ValidateBody(&carts.CartRequest{}), cartsHandler.Create)
-	cartRoutes.Put("/carts/:id", middlewares.ValidateBody(&carts.CartRequest{}), cartsHandler.Update)
+	cartRoutes.Patch("/carts/:id", middlewares.ValidateBody(&carts.CartRequest{}), cartsHandler.Update)
 	cartRoutes.Delete("/carts/:id", cartsHandler.Delete)
 
-	rentRoutes := app.Group("/api/v1", middlewares.Protected(), middlewares.VerifyToken)
-	rentRoutes.Get("/rents", middlewares.VerifyAdmin, rentsHandler.GetAll)
+	rentRoutes := app.Group("/api/v1", jwtMiddleware, middlewares.VerifyToken())
+	rentRoutes.Get("/rents", middlewares.VerifyAdmin(), rentsHandler.GetAll)
 	rentRoutes.Get("/rents/user", rentsHandler.GetByUser)
 	rentRoutes.Post("/rents", middlewares.ValidateBody(&rents.RentRequest{}), rentsHandler.Create)
-	rentRoutes.Put("/rents/:id", middlewares.VerifyAdmin, middlewares.ValidateBody(&rents.RentUpdateRequest{}), rentsHandler.Update)
-	rentRoutes.Delete("/rents/:id", middlewares.VerifyAdmin, rentsHandler.Delete)
+	rentRoutes.Patch("/rents/:id", middlewares.VerifyAdmin(), middlewares.ValidateBody(&rents.RentUpdateRequest{}), rentsHandler.Update)
+	rentRoutes.Delete("/rents/:id", middlewares.VerifyAdmin(), rentsHandler.Delete)
 
-	settingRoutes := app.Group("/api/v1", middlewares.Protected(), middlewares.VerifyToken, middlewares.VerifyAdmin)
+	settingRoutes := app.Group("/api/v1", jwtMiddleware, middlewares.VerifyToken(), middlewares.VerifyAdmin())
 	settingRoutes.Get("/settings", settingsHandler.GetAll)
 	settingRoutes.Get("/settings/:id", settingsHandler.GetByID)
 	settingRoutes.Get("/settings/key/:key", settingsHandler.GetByKey)
 	settingRoutes.Post("/settings", middlewares.ValidateBody(&settings.SettingRequest{}), settingsHandler.Create)
-	settingRoutes.Put("/settings/:id", middlewares.ValidateBody(&settings.SettingRequest{}), settingsHandler.Update)
+	settingRoutes.Patch("/settings/:id", middlewares.ValidateBody(&settings.SettingRequest{}), settingsHandler.Update)
 	settingRoutes.Delete("/settings/:id", settingsHandler.Delete)
 
 	return app

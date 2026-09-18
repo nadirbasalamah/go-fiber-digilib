@@ -61,7 +61,7 @@ func ValidateBody(dto any) fiber.Handler {
 		dtoType := reflect.TypeOf(dto).Elem()
 		req := reflect.New(dtoType).Interface()
 
-		if err := c.Bind().JSON(req); err != nil {
+		if err := c.Bind().All(req); err != nil {
 			return c.Status(http.StatusBadRequest).JSON(dtos.Response[any]{
 				Status:  "failed",
 				Message: "invalid request body",
