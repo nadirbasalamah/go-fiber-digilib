@@ -24,11 +24,6 @@ import (
 
 func NewApp(repository *gorm.DB, cld *cloudinary.Cloudinary, jwtConfig middlewares.JWTConfig) *fiber.App {
 	var (
-		// app = fiber.New(fiber.Config{
-		// 	StructValidator: &middlewares.CustomValidator{
-		// 		Validator: middlewares.InitValidator(),
-		// 	},
-		// })
 		app                   = fiber.New()
 		categoryService       = categories.New(repository)
 		bookService           = books.New(repository)
@@ -64,13 +59,13 @@ func NewApp(repository *gorm.DB, cld *cloudinary.Cloudinary, jwtConfig middlewar
 
 	authRoutes := app.Group("/api/v1/auth")
 
-	authRoutes.Post("/register", authHandler.Register)
-	authRoutes.Post("/login", authHandler.Login)
+	authRoutes.Post("/register", middlewares.ValidateBody(&auth.RegisterRequest{}), authHandler.Register)
+	authRoutes.Post("/login", middlewares.ValidateBody(&auth.LoginRequest{}), authHandler.Login)
 
 	userRoutes := app.Group("/api/v1", jwtMiddleware, middlewares.VerifyToken())
 
 	userRoutes.Get("/profile", usersHandler.GetProfile)
-	userRoutes.Patch("/profile/edit", usersHandler.EditProfile)
+	userRoutes.Patch("/profile/edit", middlewares.ValidateBody(&users.EditProfileRequest{}), usersHandler.EditProfile)
 
 	categoryRoutes := app.Group("/api/v1", jwtMiddleware, middlewares.VerifyToken())
 	categoryRoutes.Get("/categories", categoriesHandler.GetAll)

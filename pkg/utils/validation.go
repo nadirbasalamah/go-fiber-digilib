@@ -17,6 +17,16 @@ func init() {
 		return match
 	})
 
+	validate.RegisterValidation("containsUppercaseLetter", func(fl validator.FieldLevel) bool {
+		match, _ := regexp.MatchString(`[A-Z]`, fl.Field().String())
+		return match
+	})
+
+	validate.RegisterValidation("containsLowercaseLetter", func(fl validator.FieldLevel) bool {
+		match, _ := regexp.MatchString(`[a-z]`, fl.Field().String())
+		return match
+	})
+
 	validate.RegisterValidation("containsSpecialCharacter", func(fl validator.FieldLevel) bool {
 		match, _ := regexp.MatchString(`[!@#$%^&*()]`, fl.Field().String())
 		return match

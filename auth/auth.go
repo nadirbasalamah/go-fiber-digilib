@@ -25,7 +25,7 @@ type User struct {
 type RegisterRequest struct {
 	Username   string `json:"username" validate:"required"`
 	Email      string `json:"email" validate:"required,email"`
-	Password   string `json:"password" validate:"required,min=8,containsNumber,containsSpecialCharacter"`
+	Password   string `json:"password" validate:"required,min=8,containsUppercaseLetter,containsLowercaseLetter,containsNumber,containsSpecialCharacter"`
 	Address    string `json:"address" validate:"required"`
 	ProvinceID uint   `json:"province_id" validate:"required"`
 	CityID     uint   `json:"city_id" validate:"required"`

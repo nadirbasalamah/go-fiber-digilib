@@ -26,6 +26,16 @@ func InitValidator() *validator.Validate {
 		return match
 	})
 
+	validate.RegisterValidation("containsUppercaseLetter", func(fl validator.FieldLevel) bool {
+		match, _ := regexp.MatchString(`[A-Z]`, fl.Field().String())
+		return match
+	})
+
+	validate.RegisterValidation("containsLowercaseLetter", func(fl validator.FieldLevel) bool {
+		match, _ := regexp.MatchString(`[a-z]`, fl.Field().String())
+		return match
+	})
+
 	validate.RegisterValidation("containsSpecialCharacter", func(fl validator.FieldLevel) bool {
 		match, _ := regexp.MatchString(`[!@#$%^&*()]`, fl.Field().String())
 		return match
@@ -95,6 +105,10 @@ func getErrorMessage(fieldName string, err validator.FieldError) string {
 		return "the maximum length of " + fieldName + " is equals " + err.Param()
 	case "containsNumber":
 		return "the " + fieldName + " must contains number"
+	case "containsUppercaseLetter":
+		return "the " + fieldName + " must contains uppercase letter"
+	case "containsLowercaseLetter":
+		return "the " + fieldName + " must contains lowercase letter"
 	case "containsSpecialCharacter":
 		return "the " + fieldName + " must contains special character"
 	case "validCourier":
