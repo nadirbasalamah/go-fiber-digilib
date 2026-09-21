@@ -42,7 +42,7 @@ func (r Rents) GetAll(ctx fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
-			Message: "fetch book rents failed",
+			Message: utils.GetErrorMessage(err),
 		})
 	}
 
@@ -62,7 +62,7 @@ func (r Rents) GetByUser(ctx fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
-			Message: "fetch rents failed",
+			Message: utils.GetErrorMessage(err),
 		})
 	}
 
@@ -82,7 +82,7 @@ func (r Rents) Create(ctx fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
-			Message: "failed to retrieve user data",
+			Message: utils.GetErrorMessage(err),
 		})
 	}
 
@@ -94,7 +94,7 @@ func (r Rents) Create(ctx fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
-			Message: "failed to retrieve origin",
+			Message: utils.GetErrorMessage(err),
 		})
 	}
 
@@ -122,7 +122,7 @@ func (r Rents) Create(ctx fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
-			Message: "add book to the rent failed",
+			Message: utils.GetErrorMessage(err),
 		})
 	}
 
@@ -152,7 +152,7 @@ func (r Rents) Update(ctx fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusNotFound).JSON(dtos.Response[any]{
 			Status:  "failed",
-			Message: "update rent failed",
+			Message: utils.GetErrorMessage(err),
 		})
 	}
 
@@ -180,7 +180,7 @@ func (r Rents) Delete(ctx fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusNotFound).JSON(dtos.Response[any]{
 			Status:  "failed",
-			Message: "rent not found",
+			Message: utils.GetErrorMessage(err),
 		})
 	}
 

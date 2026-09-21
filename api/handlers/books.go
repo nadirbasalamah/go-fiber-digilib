@@ -42,7 +42,7 @@ func (b Books) GetAll(ctx fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
-			Message: "fetch books failed",
+			Message: utils.GetErrorMessage(err),
 		})
 	}
 
@@ -70,7 +70,7 @@ func (b Books) GetByID(ctx fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusNotFound).JSON(dtos.Response[any]{
 			Status:  "failed",
-			Message: "book not found",
+			Message: utils.GetErrorMessage(err),
 		})
 	}
 
@@ -111,7 +111,7 @@ func (b Books) GetByCategory(ctx fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
-			Message: "fetch books failed",
+			Message: utils.GetErrorMessage(err),
 		})
 	}
 
@@ -166,7 +166,7 @@ func (b Books) Create(ctx fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
-			Message: "create book failed",
+			Message: utils.GetErrorMessage(err),
 		})
 	}
 
@@ -232,7 +232,7 @@ func (b Books) Update(ctx fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
-			Message: "update book failed",
+			Message: utils.GetErrorMessage(err),
 		})
 	}
 
@@ -260,7 +260,7 @@ func (b Books) Delete(ctx fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusNotFound).JSON(dtos.Response[any]{
 			Status:  "failed",
-			Message: "book not found",
+			Message: utils.GetErrorMessage(err),
 		})
 	}
 

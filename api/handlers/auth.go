@@ -39,7 +39,7 @@ func (a Auth) Register(ctx fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
-			Message: "user regsitration failed",
+			Message: utils.GetErrorMessage(err),
 		})
 	}
 
@@ -73,7 +73,7 @@ func (a Auth) Login(ctx fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
-			Message: "user login failed",
+			Message: utils.GetErrorMessage(err),
 		})
 	}
 

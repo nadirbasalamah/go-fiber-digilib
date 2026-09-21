@@ -35,7 +35,7 @@ func (u Users) GetProfile(ctx fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusNotFound).JSON(dtos.Response[any]{
 			Status:  "failed",
-			Message: "user not found",
+			Message: utils.GetErrorMessage(err),
 		})
 	}
 
@@ -114,7 +114,7 @@ func (u Users) EditProfile(ctx fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
-			Message: "update profile failed",
+			Message: utils.GetErrorMessage(err),
 		})
 	}
 

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"go-fiber-digilib/pkg/dtos"
+	"go-fiber-digilib/pkg/utils"
 	"go-fiber-digilib/settings"
 	"net/http"
 	"strconv"
@@ -20,7 +21,7 @@ func (s Settings) GetAll(ctx fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
-			Message: "fetch settings failed",
+			Message: utils.GetErrorMessage(err),
 		})
 	}
 
@@ -48,7 +49,7 @@ func (s Settings) GetByID(ctx fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusNotFound).JSON(dtos.Response[any]{
 			Status:  "failed",
-			Message: "setting not found",
+			Message: utils.GetErrorMessage(err),
 		})
 	}
 
@@ -67,7 +68,7 @@ func (s Settings) GetByKey(ctx fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusNotFound).JSON(dtos.Response[any]{
 			Status:  "failed",
-			Message: "setting not found",
+			Message: utils.GetErrorMessage(err),
 		})
 	}
 
@@ -86,7 +87,7 @@ func (s Settings) Create(ctx fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
-			Message: "create setting failed",
+			Message: utils.GetErrorMessage(err),
 		})
 	}
 
@@ -116,7 +117,7 @@ func (s Settings) Update(ctx fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusNotFound).JSON(dtos.Response[any]{
 			Status:  "failed",
-			Message: "update setting failed",
+			Message: utils.GetErrorMessage(err),
 		})
 	}
 
@@ -144,7 +145,7 @@ func (s Settings) Delete(ctx fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusNotFound).JSON(dtos.Response[any]{
 			Status:  "failed",
-			Message: "setting not found",
+			Message: utils.GetErrorMessage(err),
 		})
 	}
 

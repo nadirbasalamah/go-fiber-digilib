@@ -61,7 +61,7 @@ func (c Categories) GetByID(ctx fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusNotFound).JSON(dtos.Response[any]{
 			Status:  "failed",
-			Message: "category not found",
+			Message: utils.GetErrorMessage(err),
 		})
 	}
 
@@ -80,7 +80,7 @@ func (c Categories) Create(ctx fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
-			Message: "create category failed",
+			Message: utils.GetErrorMessage(err),
 		})
 	}
 
@@ -110,7 +110,7 @@ func (c Categories) Update(ctx fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusNotFound).JSON(dtos.Response[any]{
 			Status:  "failed",
-			Message: "update category failed",
+			Message: utils.GetErrorMessage(err),
 		})
 	}
 
@@ -138,7 +138,7 @@ func (c Categories) Delete(ctx fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusNotFound).JSON(dtos.Response[any]{
 			Status:  "failed",
-			Message: "category not found",
+			Message: utils.GetErrorMessage(err),
 		})
 	}
 

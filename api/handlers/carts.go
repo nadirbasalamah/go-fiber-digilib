@@ -5,6 +5,7 @@ import (
 	"go-fiber-digilib/api/middlewares"
 	"go-fiber-digilib/carts"
 	"go-fiber-digilib/pkg/dtos"
+	"go-fiber-digilib/pkg/utils"
 	"net/http"
 	"strconv"
 
@@ -24,7 +25,7 @@ func (c Carts) GetByUser(ctx fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
-			Message: "fetch carts failed",
+			Message: utils.GetErrorMessage(err),
 		})
 	}
 
@@ -47,7 +48,7 @@ func (c Carts) Create(ctx fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
 			Status:  "failed",
-			Message: "add book to the cart failed",
+			Message: utils.GetErrorMessage(err),
 		})
 	}
 
@@ -81,7 +82,7 @@ func (c Carts) Update(ctx fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusNotFound).JSON(dtos.Response[any]{
 			Status:  "failed",
-			Message: "update cart failed",
+			Message: utils.GetErrorMessage(err),
 		})
 	}
 
@@ -114,7 +115,7 @@ func (c Carts) Delete(ctx fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusNotFound).JSON(dtos.Response[any]{
 			Status:  "failed",
-			Message: "cart not found",
+			Message: utils.GetErrorMessage(err),
 		})
 	}
 
