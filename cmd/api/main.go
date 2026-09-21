@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"go-fiber-digilib/api"
 	"go-fiber-digilib/api/middlewares"
@@ -9,8 +11,19 @@ import (
 	"go-fiber-digilib/pkg/fileupload"
 	"go-fiber-digilib/pkg/utils"
 	"log"
+	"net/http"
+	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
+	"time"
+
+	"github.com/gofiber/fiber/v3"
+	"gorm.io/gorm"
 )
+
+var app *fiber.App
+var repository *gorm.DB
 
 func main() {
 	dbConfig := drivers.DBConfig{
@@ -36,17 +49,40 @@ func main() {
 		ExpiresDuration: expireDuration,
 	}
 
-	var (
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	go func() {
+
+		var cloudinary = cloudinaryConfig.InitCloudinary()
+
 		repository = dbConfig.InitDB()
-		cloudinary = cloudinaryConfig.InitCloudinary()
-		app        = api.NewApp(repository, cloudinary, jwtConfig)
-	)
+		app = api.NewApp(repository, cloudinary, jwtConfig)
 
-	drivers.MigrateDB(repository)
+		drivers.MigrateDB(repository)
 
-	appPort := fmt.Sprintf(":%s", utils.GetConfig(constant.PORT))
+		appPort := fmt.Sprintf(":%s", utils.GetConfig(constant.PORT))
 
-	if err := app.Listen(appPort); err != nil {
-		log.Fatalf("failed to start server %v\n", err)
+		log.Printf("Server starting on port %s...\n", appPort)
+
+		if err := app.Listen(appPort); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("failed to start server %v\n", err)
+		}
+	}()
+
+	<-ctx.Done()
+	log.Println("Shutdown signal received, starting graceful cleanup...")
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := app.ShutdownWithContext(shutdownCtx); err != nil {
+		log.Fatalf("Server forced to shutdown: %v", err)
 	}
+
+	if err := drivers.CloseDB(repository); err != nil {
+		log.Fatalf("error occurred when database closed: %v", err)
+	}
+	log.Println("Server gracefully stopped")
+
 }
