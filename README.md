@@ -15,5 +15,5 @@ cp .env.example .env
 3. Start the application.
 
 ```sh
-go run main.go
+go run cmd/api/main.go
 ```
