@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"go-fiber-digilib/books"
 	"go-fiber-digilib/pkg/ai"
+	"go-fiber-digilib/pkg/constant"
 	"go-fiber-digilib/pkg/dtos"
 	"go-fiber-digilib/pkg/fileupload"
 	"go-fiber-digilib/pkg/utils"
+	"log"
 	"net/http"
 	"path/filepath"
 	"strconv"
@@ -142,7 +144,7 @@ func (b Books) Create(ctx fiber.Ctx) error {
 		})
 	}
 
-	fileLink, err := b.uploader.UploadFile(ctx.Context(), file)
+	resp, err := b.uploader.UploadFile(ctx.Context(), file)
 
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
@@ -151,7 +153,8 @@ func (b Books) Create(ctx fiber.Ctx) error {
 		})
 	}
 
-	bookReq.ImageLink = fileLink
+	bookReq.ImageLink = resp.SecureURL
+	bookReq.ImageID = resp.PublicID
 
 	book, err := b.books.Create(ctx.Context(), bookReq)
 
@@ -183,35 +186,48 @@ func (b Books) Update(ctx fiber.Ctx) error {
 
 	bookReq := ctx.Locals("validatedBody").(*books.BookRequest)
 
+	existingBook, err := b.books.GetByID(ctx.Context(), uint(id))
+
+	if err != nil {
+		return ctx.Status(http.StatusNotFound).JSON(dtos.Response[any]{
+			Status:  "failed",
+			Message: utils.GetErrorMessage(err),
+		})
+	}
+
 	file, err := ctx.FormFile("file")
-	if err != nil {
-		return ctx.Status(http.StatusUnprocessableEntity).JSON(dtos.Response[any]{
-			Status:  "failed",
-			Message: "file not found",
-		})
+
+	if file != nil {
+		if err != nil {
+			return ctx.Status(http.StatusUnprocessableEntity).JSON(dtos.Response[any]{
+				Status:  "failed",
+				Message: "file not found",
+			})
+		}
+
+		ext := strings.ToLower(filepath.Ext(file.Filename))
+
+		isFileValid := utils.ValidateFile(ext)
+
+		if !isFileValid {
+			return ctx.Status(http.StatusUnprocessableEntity).JSON(dtos.Response[any]{
+				Status:  "failed",
+				Message: "invalid file format",
+			})
+		}
+
+		resp, err := b.uploader.UploadFile(ctx.Context(), file)
+
+		if err != nil {
+			return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
+				Status:  "failed",
+				Message: "upload failed",
+			})
+		}
+
+		bookReq.ImageLink = resp.SecureURL
+		bookReq.ImageID = resp.PublicID
 	}
-
-	ext := strings.ToLower(filepath.Ext(file.Filename))
-
-	isFileValid := utils.ValidateFile(ext)
-
-	if !isFileValid {
-		return ctx.Status(http.StatusUnprocessableEntity).JSON(dtos.Response[any]{
-			Status:  "failed",
-			Message: "invalid file format",
-		})
-	}
-
-	fileLink, err := b.uploader.UploadFile(ctx.Context(), file)
-
-	if err != nil {
-		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
-			Status:  "failed",
-			Message: "upload failed",
-		})
-	}
-
-	bookReq.ImageLink = fileLink
 
 	book, err := b.books.Update(ctx.Context(), bookReq, uint(id))
 
@@ -220,6 +236,15 @@ func (b Books) Update(ctx fiber.Ctx) error {
 			Status:  "failed",
 			Message: utils.GetErrorMessage(err),
 		})
+	}
+
+	if file != nil && existingBook.ImageID != "" {
+		if _, err := b.uploader.DeleteFile(ctx.Context(), existingBook.ImageID, constant.RESOURCE_IMAGE); err != nil {
+			return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
+				Status:  "update failed",
+				Message: "failed to delete old file",
+			})
+		}
 	}
 
 	return ctx.Status(http.StatusOK).JSON(dtos.Response[books.Book]{
@@ -241,6 +266,15 @@ func (b Books) Delete(ctx fiber.Ctx) error {
 		})
 	}
 
+	book, err := b.books.GetByID(ctx.Context(), uint(id))
+
+	if err != nil {
+		return ctx.Status(http.StatusNotFound).JSON(dtos.Response[any]{
+			Status:  "failed",
+			Message: utils.GetErrorMessage(err),
+		})
+	}
+
 	err = b.books.Delete(ctx.Context(), uint(id))
 
 	if err != nil {
@@ -248,6 +282,12 @@ func (b Books) Delete(ctx fiber.Ctx) error {
 			Status:  "failed",
 			Message: utils.GetErrorMessage(err),
 		})
+	}
+
+	if book.ImageID != "" {
+		if _, err := b.uploader.DeleteFile(ctx.Context(), book.ImageID, constant.RESOURCE_IMAGE); err != nil {
+			log.Printf("failed to delete book image %s: %v", book.ImageID, err)
+		}
 	}
 
 	return ctx.Status(http.StatusOK).JSON(dtos.Response[any]{

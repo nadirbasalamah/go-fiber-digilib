@@ -16,6 +16,7 @@ type Book struct {
 	Year        uint                `json:"year"`
 	Stock       uint                `json:"stock"`
 	ImageLink   string              `json:"image_link"`
+	ImageID     string              `json:"image_id"`
 	CategoryID  uint                `json:"category_id"`
 	Category    categories.Category `json:"category"`
 	CreatedAt   time.Time           `json:"created_at"`
@@ -31,5 +32,6 @@ type BookRequest struct {
 	Stock       uint   `form:"stock" validate:"required"`
 	CategoryID  uint   `form:"category_id" validate:"required"`
 	ImageLink   string
+	ImageID     string
 	File        *multipart.FileHeader
 }

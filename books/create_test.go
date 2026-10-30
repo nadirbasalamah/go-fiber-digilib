@@ -44,7 +44,7 @@ func TestCreate_Success(t *testing.T) {
 	req := testReq()
 
 	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "books"`)).
-		WithArgs("Test Book", "Test Description", "Test Publisher", int64(2024), int64(10), "https://example.com/image.jpg", int64(1), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WithArgs("Test Book", "Test Description", "Test Publisher", int64(2024), int64(10), "https://example.com/image.jpg", "", int64(1), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(int64(1)))
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT "books"."id","books"."title"`)).
@@ -76,7 +76,7 @@ func TestCreate_ErrorOnInsert(t *testing.T) {
 	req := testReq()
 
 	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "books"`)).
-		WithArgs("Test Book", "Test Description", "Test Publisher", int64(2024), int64(10), "https://example.com/image.jpg", int64(1), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WithArgs("Test Book", "Test Description", "Test Publisher", int64(2024), int64(10), "https://example.com/image.jpg", "", int64(1), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnError(errors.New("insert error"))
 
 	_, err := c.Create(context.Background(), req)
@@ -90,7 +90,7 @@ func TestCreate_ErrorOnLastQuery(t *testing.T) {
 	req := testReq()
 
 	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "books"`)).
-		WithArgs("Test Book", "Test Description", "Test Publisher", int64(2024), int64(10), "https://example.com/image.jpg", int64(1), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WithArgs("Test Book", "Test Description", "Test Publisher", int64(2024), int64(10), "https://example.com/image.jpg", "", int64(1), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(int64(1)))
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT "books"."id","books"."title"`)).
@@ -107,7 +107,7 @@ func TestCreate_ErrorOnPreload(t *testing.T) {
 	req := testReq()
 
 	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "books"`)).
-		WithArgs("Test Book", "Test Description", "Test Publisher", int64(2024), int64(10), "https://example.com/image.jpg", int64(1), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WithArgs("Test Book", "Test Description", "Test Publisher", int64(2024), int64(10), "https://example.com/image.jpg", "", int64(1), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(int64(1)))
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT "books"."id","books"."title"`)).
@@ -129,7 +129,7 @@ func TestCreate_EmptyRequest(t *testing.T) {
 	req := &BookRequest{}
 
 	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "books"`)).
-		WithArgs("", "", "", int64(0), int64(0), "", int64(0), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WithArgs("", "", "", int64(0), int64(0), "", "", int64(0), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(int64(1)))
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT "books"."id","books"."title"`)).

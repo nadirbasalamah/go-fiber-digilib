@@ -20,7 +20,7 @@ import (
 func TestUsersGetProfile(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		mockService := usersmocks.NewMockService(t)
-		handler := NewUsers(mockService, stubUploader{})
+		handler := NewUsers(mockService, &stubUploader{})
 
 		mockService.EXPECT().
 			GetProfile(anyCtx(), uint(1)).
@@ -39,7 +39,7 @@ func TestUsersGetProfile(t *testing.T) {
 
 	t.Run("invalid token", func(t *testing.T) {
 		mockService := usersmocks.NewMockService(t)
-		handler := NewUsers(mockService, stubUploader{})
+		handler := NewUsers(mockService, &stubUploader{})
 
 		app, _ := newAuthedApp(t, http.MethodGet, "/profile", handler.GetProfile)
 
@@ -49,7 +49,7 @@ func TestUsersGetProfile(t *testing.T) {
 
 	t.Run("service error", func(t *testing.T) {
 		mockService := usersmocks.NewMockService(t)
-		handler := NewUsers(mockService, stubUploader{})
+		handler := NewUsers(mockService, &stubUploader{})
 
 		mockService.EXPECT().
 			GetProfile(anyCtx(), uint(1)).
@@ -112,7 +112,7 @@ func TestUsersEditProfile(t *testing.T) {
 
 	t.Run("invalid token", func(t *testing.T) {
 		mockService := usersmocks.NewMockService(t)
-		handler := NewUsers(mockService, stubUploader{})
+		handler := NewUsers(mockService, &stubUploader{})
 
 		app, _ := newAuthedApp(t, http.MethodPatch, "/profile/edit", handler.EditProfile)
 
@@ -122,7 +122,7 @@ func TestUsersEditProfile(t *testing.T) {
 
 	t.Run("invalid form body", func(t *testing.T) {
 		mockService := usersmocks.NewMockService(t)
-		handler := NewUsers(mockService, stubUploader{})
+		handler := NewUsers(mockService, &stubUploader{})
 
 		app, token := newAuthedApp(t, http.MethodPatch, "/profile/edit", handler.EditProfile)
 
@@ -134,7 +134,7 @@ func TestUsersEditProfile(t *testing.T) {
 
 	t.Run("validation failed", func(t *testing.T) {
 		mockService := usersmocks.NewMockService(t)
-		handler := NewUsers(mockService, stubUploader{})
+		handler := NewUsers(mockService, &stubUploader{})
 
 		body, contentType := newMultipartBody(t, map[string]string{"username": "", "email": "bad"}, "", "")
 
@@ -150,7 +150,7 @@ func TestUsersEditProfile(t *testing.T) {
 
 	t.Run("file not found", func(t *testing.T) {
 		mockService := usersmocks.NewMockService(t)
-		handler := NewUsers(mockService, stubUploader{})
+		handler := NewUsers(mockService, &stubUploader{})
 
 		body, contentType := newMultipartBody(t, validFields, "", "")
 
@@ -166,7 +166,7 @@ func TestUsersEditProfile(t *testing.T) {
 
 	t.Run("invalid file format", func(t *testing.T) {
 		mockService := usersmocks.NewMockService(t)
-		handler := NewUsers(mockService, stubUploader{})
+		handler := NewUsers(mockService, &stubUploader{})
 
 		body, contentType := newMultipartBody(t, validFields, "avatar.txt", "hello")
 
@@ -181,7 +181,7 @@ func TestUsersEditProfile(t *testing.T) {
 	})
 
 	t.Run("upload error", func(t *testing.T) {
-		handler, _ := newUsersHandler(t, stubUploader{err: errors.New("cloudinary down")})
+		handler, _ := newUsersHandler(t, &stubUploader{err: errors.New("cloudinary down")})
 
 		body, contentType := newMultipartBody(t, validFields, "avatar.png", "hello")
 
@@ -196,7 +196,7 @@ func TestUsersEditProfile(t *testing.T) {
 	})
 
 	t.Run("success", func(t *testing.T) {
-		handler, mockService := newUsersHandler(t, stubUploader{url: "https://img/avatar.png"})
+		handler, mockService := newUsersHandler(t, &stubUploader{url: "https://img/avatar.png"})
 
 		mockService.EXPECT().
 			Update(anyCtx(), mock.MatchedBy(func(req *usersPkg.EditProfileRequest) bool {
@@ -218,7 +218,7 @@ func TestUsersEditProfile(t *testing.T) {
 	})
 
 	t.Run("service error", func(t *testing.T) {
-		handler, mockService := newUsersHandler(t, stubUploader{url: "https://img/avatar.png"})
+		handler, mockService := newUsersHandler(t, &stubUploader{url: "https://img/avatar.png"})
 
 		mockService.EXPECT().
 			Update(anyCtx(), mock.MatchedBy(func(req *usersPkg.EditProfileRequest) bool { return true }), uint(1)).

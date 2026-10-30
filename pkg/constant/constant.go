@@ -36,3 +36,7 @@ var ALLOWED_EXTENSIONS map[string]bool = map[string]bool{
 	".jpg":  true,
 	".jpeg": true,
 }
+
+const (
+	RESOURCE_IMAGE = "image"
+)

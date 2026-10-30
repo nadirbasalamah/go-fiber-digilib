@@ -14,6 +14,7 @@ type Book struct {
 	Year        uint           `json:"year"`
 	Stock       uint           `json:"stock"`
 	ImageLink   string         `json:"image_link"`
+	ImageID     string         `json:"image_id"`
 	CategoryID  uint           `json:"category_id"`
 	Category    Category       `json:"category"`
 	CreatedAt   time.Time      `json:"created_at"`

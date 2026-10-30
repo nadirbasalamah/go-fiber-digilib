@@ -5,16 +5,36 @@ import (
 	"mime/multipart"
 
 	"go-fiber-digilib/pkg/ai"
+	"go-fiber-digilib/pkg/fileupload"
 	"go-fiber-digilib/pkg/rajaongkir"
+
+	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 )
 
 type stubUploader struct {
-	url string
-	err error
+	url       string
+	publicID  string
+	err       error
+	deleteErr error
+	deletedID string
 }
 
-func (s stubUploader) UploadFile(_ context.Context, _ *multipart.FileHeader) (string, error) {
-	return s.url, s.err
+func (s *stubUploader) UploadFile(_ context.Context, _ *multipart.FileHeader) (*fileupload.FileUploadResult, error) {
+	if s.err != nil {
+		return nil, s.err
+	}
+
+	return &fileupload.FileUploadResult{SecureURL: s.url, PublicID: s.publicID}, nil
+}
+
+func (s *stubUploader) DeleteFile(_ context.Context, fileID string, _ string) (*uploader.DestroyResult, error) {
+	s.deletedID = fileID
+
+	if s.deleteErr != nil {
+		return nil, s.deleteErr
+	}
+
+	return &uploader.DestroyResult{Result: "ok"}, nil
 }
 
 type stubRajaOngkir struct {

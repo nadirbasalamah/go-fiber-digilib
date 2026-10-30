@@ -20,6 +20,7 @@ func (c create) Create(ctx context.Context, bookReq *BookRequest) (Book, error) 
 		Year:        bookReq.Year,
 		Stock:       bookReq.Stock,
 		ImageLink:   bookReq.ImageLink,
+		ImageID:     bookReq.ImageID,
 		CategoryID:  bookReq.CategoryID,
 	}
 

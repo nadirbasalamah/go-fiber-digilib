@@ -19,7 +19,7 @@ func testBooksHandler(t *testing.T) (Books, *booksmocks.MockService) {
 
 	mockService := booksmocks.NewMockService(t)
 
-	return NewBooks(mockService, stubUploader{}, stubRecommendation{}), mockService
+	return NewBooks(mockService, &stubUploader{}, stubRecommendation{}), mockService
 }
 
 func TestBooksGetAll(t *testing.T) {
@@ -205,7 +205,7 @@ func TestBooksCreate(t *testing.T) {
 
 	t.Run("upload error", func(t *testing.T) {
 		mockService := booksmocks.NewMockService(t)
-		handler := NewBooks(mockService, stubUploader{err: errors.New("cloudinary down")}, stubRecommendation{})
+		handler := NewBooks(mockService, &stubUploader{err: errors.New("cloudinary down")}, stubRecommendation{})
 
 		body, contentType := newMultipartBody(t, bookFields, "book.png", "content")
 
@@ -222,7 +222,7 @@ func TestBooksCreate(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		mockService := booksmocks.NewMockService(t)
-		handler := NewBooks(mockService, stubUploader{url: "https://img/book.png"}, stubRecommendation{})
+		handler := NewBooks(mockService, &stubUploader{url: "https://img/book.png"}, stubRecommendation{})
 
 		mockService.EXPECT().
 			Create(anyCtx(), mock.MatchedBy(func(req *books.BookRequest) bool {
@@ -246,7 +246,7 @@ func TestBooksCreate(t *testing.T) {
 
 	t.Run("service error", func(t *testing.T) {
 		mockService := booksmocks.NewMockService(t)
-		handler := NewBooks(mockService, stubUploader{url: "https://img/book.png"}, stubRecommendation{})
+		handler := NewBooks(mockService, &stubUploader{url: "https://img/book.png"}, stubRecommendation{})
 
 		mockService.EXPECT().
 			Create(anyCtx(), mock.MatchedBy(func(req *books.BookRequest) bool { return true })).
@@ -282,7 +282,16 @@ func TestBooksUpdate(t *testing.T) {
 	})
 
 	t.Run("file not found", func(t *testing.T) {
-		handler, _ := testBooksHandler(t)
+		handler, mockService := testBooksHandler(t)
+
+		mockService.EXPECT().
+			GetByID(anyCtx(), uint(1)).
+			Return(books.Book{ID: 1, ImageID: "old-id"}, nil).
+			Once()
+		mockService.EXPECT().
+			Update(anyCtx(), mock.MatchedBy(func(req *books.BookRequest) bool { return true }), uint(1)).
+			Return(books.Book{}, errors.New("db down")).
+			Once()
 
 		body, contentType := newMultipartBody(t, nil, "", "")
 
@@ -290,15 +299,16 @@ func TestBooksUpdate(t *testing.T) {
 		registerRoute(app, http.MethodPatch, "/books/:id", handler.Update, withLocals(locals))
 
 		resp := performRequest(t, app, http.MethodPatch, "/books/1", body, contentType)
-		require.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
-
-		var envelope responseEnvelope
-		readResponse(t, resp, &envelope)
-		require.Equal(t, "file not found", envelope.Message)
+		require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 	})
 
 	t.Run("invalid file format", func(t *testing.T) {
-		handler, _ := testBooksHandler(t)
+		handler, mockService := testBooksHandler(t)
+
+		mockService.EXPECT().
+			GetByID(anyCtx(), uint(1)).
+			Return(books.Book{ID: 1, ImageID: "old-id"}, nil).
+			Once()
 
 		body, contentType := newMultipartBody(t, nil, "book.gif", "content")
 
@@ -313,9 +323,31 @@ func TestBooksUpdate(t *testing.T) {
 		require.Equal(t, "invalid file format", envelope.Message)
 	})
 
+	t.Run("book not found", func(t *testing.T) {
+		handler, mockService := testBooksHandler(t)
+
+		mockService.EXPECT().
+			GetByID(anyCtx(), uint(1)).
+			Return(books.Book{}, errors.New("book not found")).
+			Once()
+
+		body, contentType := newMultipartBody(t, nil, "book.png", "content")
+
+		app := newTestApp(t)
+		registerRoute(app, http.MethodPatch, "/books/:id", handler.Update, withLocals(locals))
+
+		resp := performRequest(t, app, http.MethodPatch, "/books/1", body, contentType)
+		require.Equal(t, http.StatusNotFound, resp.StatusCode)
+	})
+
 	t.Run("upload error", func(t *testing.T) {
 		mockService := booksmocks.NewMockService(t)
-		handler := NewBooks(mockService, stubUploader{err: errors.New("cloudinary down")}, stubRecommendation{})
+		handler := NewBooks(mockService, &stubUploader{err: errors.New("cloudinary down")}, stubRecommendation{})
+
+		mockService.EXPECT().
+			GetByID(anyCtx(), uint(1)).
+			Return(books.Book{ID: 1, ImageID: "old-id"}, nil).
+			Once()
 
 		body, contentType := newMultipartBody(t, nil, "book.png", "content")
 
@@ -330,13 +362,18 @@ func TestBooksUpdate(t *testing.T) {
 		require.Equal(t, "upload failed", envelope.Message)
 	})
 
-	t.Run("success", func(t *testing.T) {
+	t.Run("success replaces old image", func(t *testing.T) {
 		mockService := booksmocks.NewMockService(t)
-		handler := NewBooks(mockService, stubUploader{url: "https://img/book.png"}, stubRecommendation{})
+		uploader := &stubUploader{url: "https://img/book.png", publicID: "new-id"}
+		handler := NewBooks(mockService, uploader, stubRecommendation{})
 
 		mockService.EXPECT().
+			GetByID(anyCtx(), uint(1)).
+			Return(books.Book{ID: 1, ImageID: "old-id"}, nil).
+			Once()
+		mockService.EXPECT().
 			Update(anyCtx(), mock.MatchedBy(func(req *books.BookRequest) bool {
-				return req.ImageLink == "https://img/book.png"
+				return req.ImageLink == "https://img/book.png" && req.ImageID == "new-id"
 			}), uint(1)).
 			Return(books.Book{ID: 1, Title: "Go", ImageLink: "https://img/book.png"}, nil).
 			Once()
@@ -348,6 +385,7 @@ func TestBooksUpdate(t *testing.T) {
 
 		resp := performRequest(t, app, http.MethodPatch, "/books/1", body, contentType)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
+		require.Equal(t, "old-id", uploader.deletedID)
 
 		var envelope responseEnvelope
 		readResponse(t, resp, &envelope)
@@ -356,8 +394,13 @@ func TestBooksUpdate(t *testing.T) {
 
 	t.Run("service error", func(t *testing.T) {
 		mockService := booksmocks.NewMockService(t)
-		handler := NewBooks(mockService, stubUploader{url: "https://img/book.png"}, stubRecommendation{})
+		uploader := &stubUploader{url: "https://img/book.png", publicID: "new-id"}
+		handler := NewBooks(mockService, uploader, stubRecommendation{})
 
+		mockService.EXPECT().
+			GetByID(anyCtx(), uint(1)).
+			Return(books.Book{ID: 1, ImageID: "old-id"}, nil).
+			Once()
 		mockService.EXPECT().
 			Update(anyCtx(), mock.MatchedBy(func(req *books.BookRequest) bool { return true }), uint(1)).
 			Return(books.Book{}, errors.New("db down")).
@@ -370,12 +413,20 @@ func TestBooksUpdate(t *testing.T) {
 
 		resp := performRequest(t, app, http.MethodPatch, "/books/1", body, contentType)
 		require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+		require.Empty(t, uploader.deletedID)
 	})
 }
 
 func TestBooksDelete(t *testing.T) {
-	t.Run("success", func(t *testing.T) {
-		handler, mockService := testBooksHandler(t)
+	t.Run("success deletes image", func(t *testing.T) {
+		mockService := booksmocks.NewMockService(t)
+		uploader := &stubUploader{}
+		handler := NewBooks(mockService, uploader, stubRecommendation{})
+
+		mockService.EXPECT().
+			GetByID(anyCtx(), uint(1)).
+			Return(books.Book{ID: 1, ImageID: "book-id"}, nil).
+			Once()
 		mockService.EXPECT().
 			Delete(anyCtx(), uint(1)).
 			Return(nil).
@@ -386,6 +437,7 @@ func TestBooksDelete(t *testing.T) {
 
 		resp := performRequest(t, app, http.MethodDelete, "/books/1", nil, "")
 		require.Equal(t, http.StatusOK, resp.StatusCode)
+		require.Equal(t, "book-id", uploader.deletedID)
 
 		var envelope responseEnvelope
 		readResponse(t, resp, &envelope)
@@ -404,6 +456,11 @@ func TestBooksDelete(t *testing.T) {
 
 	t.Run("service error", func(t *testing.T) {
 		handler, mockService := testBooksHandler(t)
+
+		mockService.EXPECT().
+			GetByID(anyCtx(), uint(1)).
+			Return(books.Book{ID: 1, ImageID: "book-id"}, nil).
+			Once()
 		mockService.EXPECT().
 			Delete(anyCtx(), uint(1)).
 			Return(errors.New("not found")).
@@ -424,7 +481,7 @@ func TestBooksGetBookRecommendation(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		mockService := booksmocks.NewMockService(t)
 		content := `[{"number":1,"title":"Go in Action","summary":"s","publisher":"p","year":2015}]`
-		handler := NewBooks(mockService, stubUploader{}, stubRecommendation{
+		handler := NewBooks(mockService, &stubUploader{}, stubRecommendation{
 			response: ai.PromptResponse{Choices: []ai.Choice{{Message: ai.ResponseMessage{Content: content}}}},
 		})
 
@@ -441,7 +498,7 @@ func TestBooksGetBookRecommendation(t *testing.T) {
 
 	t.Run("recommendation service error", func(t *testing.T) {
 		mockService := booksmocks.NewMockService(t)
-		handler := NewBooks(mockService, stubUploader{}, stubRecommendation{err: errors.New("ai down")})
+		handler := NewBooks(mockService, &stubUploader{}, stubRecommendation{err: errors.New("ai down")})
 
 		app := newTestApp(t)
 		registerRoute(app, http.MethodPost, "/books/recommendations", handler.GetBookRecommendation, withLocals(locals))
@@ -456,7 +513,7 @@ func TestBooksGetBookRecommendation(t *testing.T) {
 
 	t.Run("invalid recommendation format", func(t *testing.T) {
 		mockService := booksmocks.NewMockService(t)
-		handler := NewBooks(mockService, stubUploader{}, stubRecommendation{
+		handler := NewBooks(mockService, &stubUploader{}, stubRecommendation{
 			response: ai.PromptResponse{Choices: []ai.Choice{{Message: ai.ResponseMessage{Content: "not-json"}}}},
 		})
 

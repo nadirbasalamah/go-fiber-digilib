@@ -90,7 +90,7 @@ func (u Users) EditProfile(ctx fiber.Ctx) error {
 		})
 	}
 
-	fileLink, err := u.uploader.UploadFile(ctx.Context(), file)
+	resp, err := u.uploader.UploadFile(ctx.Context(), file)
 
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
@@ -99,7 +99,7 @@ func (u Users) EditProfile(ctx fiber.Ctx) error {
 		})
 	}
 
-	editReq.ProfilePicture = fileLink
+	editReq.ProfilePicture = resp.SecureURL
 
 	user, err := u.users.Update(ctx.Context(), editReq, uint(userID))
 

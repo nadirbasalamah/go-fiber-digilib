@@ -14,7 +14,13 @@ type CloudinaryConfig struct {
 }
 
 type Uploader interface {
-	UploadFile(ctx context.Context, file *multipart.FileHeader) (string, error)
+	UploadFile(ctx context.Context, file *multipart.FileHeader) (*FileUploadResult, error)
+	DeleteFile(ctx context.Context, fileID string, resourceType string) (*uploader.DestroyResult, error)
+}
+
+type FileUploadResult struct {
+	SecureURL string
+	PublicID  string
 }
 
 type CloudinaryUploader struct {
@@ -34,12 +40,29 @@ func (c *CloudinaryConfig) InitCloudinary() *cloudinary.Cloudinary {
 	return cld
 }
 
-func (c *CloudinaryUploader) UploadFile(ctx context.Context, file *multipart.FileHeader) (string, error) {
+func (c *CloudinaryUploader) UploadFile(ctx context.Context, file *multipart.FileHeader) (*FileUploadResult, error) {
 	resp, err := c.Cld.Upload.Upload(ctx, file, c.Options)
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return resp.SecureURL, nil
+	return &FileUploadResult{
+		SecureURL: resp.SecureURL,
+		PublicID:  resp.PublicID,
+	}, nil
+}
+
+func (c *CloudinaryUploader) DeleteFile(ctx context.Context, fileID string, resourceType string) (*uploader.DestroyResult, error) {
+	resp, err := c.Cld.Upload.Destroy(ctx, uploader.DestroyParams{
+		PublicID:     fileID,
+		ResourceType: resourceType, // Options: "image", "video", "raw"
+		Invalidate:   c.Options.UseFilename,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
 }
