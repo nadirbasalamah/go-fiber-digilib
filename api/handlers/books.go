@@ -227,6 +227,9 @@ func (b Books) Update(ctx fiber.Ctx) error {
 
 		bookReq.ImageLink = resp.SecureURL
 		bookReq.ImageID = resp.PublicID
+	} else {
+		bookReq.ImageLink = existingBook.ImageLink
+		bookReq.ImageID = existingBook.ImageID
 	}
 
 	book, err := b.books.Update(ctx.Context(), bookReq, uint(id))

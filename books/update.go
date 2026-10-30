@@ -20,11 +20,8 @@ func (u update) Update(ctx context.Context, bookReq *BookRequest, id uint) (Book
 		Year:        bookReq.Year,
 		Stock:       bookReq.Stock,
 		CategoryID:  bookReq.CategoryID,
-	}
-
-	if bookReq.ImageLink != "" {
-		book.ImageLink = bookReq.ImageLink
-		book.ImageID = bookReq.ImageID
+		ImageLink:   bookReq.ImageLink,
+		ImageID:     bookReq.ImageID,
 	}
 
 	result := u.repository.WithContext(ctx).Where("id = ?", id).Updates(&book)

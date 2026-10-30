@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"go-fiber-digilib/api/middlewares"
+	"go-fiber-digilib/pkg/constant"
 	"go-fiber-digilib/pkg/dtos"
 	"go-fiber-digilib/pkg/fileupload"
 	"go-fiber-digilib/pkg/utils"
@@ -71,35 +72,59 @@ func (u Users) EditProfile(ctx fiber.Ctx) error {
 		})
 	}
 
+	userRecord, err := u.users.GetProfile(ctx.Context(), uint(userID))
+
+	if err != nil {
+		return ctx.Status(http.StatusNotFound).JSON(dtos.Response[any]{
+			Status:  "failed",
+			Message: "user not found",
+		})
+	}
+
 	file, err := ctx.FormFile("file")
-	if err != nil {
-		return ctx.Status(http.StatusUnprocessableEntity).JSON(dtos.Response[any]{
-			Status:  "failed",
-			Message: "file not found",
-		})
+
+	if file != nil {
+		if err != nil {
+			return ctx.Status(http.StatusUnprocessableEntity).JSON(dtos.Response[any]{
+				Status:  "failed",
+				Message: "file not found",
+			})
+		}
+
+		ext := strings.ToLower(filepath.Ext(file.Filename))
+
+		isFileValid := utils.ValidateFile(ext)
+
+		if !isFileValid {
+			return ctx.Status(http.StatusUnprocessableEntity).JSON(dtos.Response[any]{
+				Status:  "failed",
+				Message: "invalid file format",
+			})
+		}
+
+		resp, err := u.uploader.UploadFile(ctx.Context(), file)
+
+		if err != nil {
+			return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
+				Status:  "failed",
+				Message: "upload failed",
+			})
+		}
+
+		editReq.ProfilePicture = resp.SecureURL
+		editReq.ProfilePictureID = resp.PublicID
+
+		if _, err := u.uploader.DeleteFile(ctx.Context(), userRecord.ProfilePictureID, constant.RESOURCE_IMAGE); err != nil {
+			return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
+				Status:  "update failed",
+				Message: "old file failed to delete",
+			})
+		}
+
+	} else {
+		editReq.ProfilePicture = userRecord.ProfilePicture
+		editReq.ProfilePictureID = userRecord.ProfilePictureID
 	}
-
-	ext := strings.ToLower(filepath.Ext(file.Filename))
-
-	isFileValid := utils.ValidateFile(ext)
-
-	if !isFileValid {
-		return ctx.Status(http.StatusUnprocessableEntity).JSON(dtos.Response[any]{
-			Status:  "failed",
-			Message: "invalid file format",
-		})
-	}
-
-	resp, err := u.uploader.UploadFile(ctx.Context(), file)
-
-	if err != nil {
-		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
-			Status:  "failed",
-			Message: "upload failed",
-		})
-	}
-
-	editReq.ProfilePicture = resp.SecureURL
 
 	user, err := u.users.Update(ctx.Context(), editReq, uint(userID))
 
