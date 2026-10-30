@@ -148,25 +148,41 @@ func TestUsersEditProfile(t *testing.T) {
 		require.Equal(t, "validation failed", envelope.Message)
 	})
 
-	t.Run("file not found", func(t *testing.T) {
+	t.Run("no file keeps old picture", func(t *testing.T) {
 		mockService := usersmocks.NewMockService(t)
 		handler := NewUsers(mockService, &stubUploader{})
+
+		mockService.EXPECT().
+			GetProfile(anyCtx(), uint(1)).
+			Return(usersPkg.User{ID: 1, ProfilePicture: "https://img/old.png", ProfilePictureID: "old-id"}, nil).
+			Once()
+		mockService.EXPECT().
+			Update(anyCtx(), mock.MatchedBy(func(req *usersPkg.EditProfileRequest) bool {
+				return req.ProfilePicture == "https://img/old.png" && req.ProfilePictureID == "old-id"
+			}), uint(1)).
+			Return(usersPkg.User{ID: 1, Username: "testuser"}, nil).
+			Once()
 
 		body, contentType := newMultipartBody(t, validFields, "", "")
 
 		app, token := newAuthedApp(t, http.MethodPatch, "/profile/edit", handler.EditProfile)
 
 		resp := performAuthed(t, app, http.MethodPatch, "/profile/edit", body, contentType, token)
-		require.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
+		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		var envelope responseEnvelope
 		readResponse(t, resp, &envelope)
-		require.Equal(t, "file not found", envelope.Message)
+		require.Equal(t, "profile updated", envelope.Message)
 	})
 
 	t.Run("invalid file format", func(t *testing.T) {
 		mockService := usersmocks.NewMockService(t)
 		handler := NewUsers(mockService, &stubUploader{})
+
+		mockService.EXPECT().
+			GetProfile(anyCtx(), uint(1)).
+			Return(usersPkg.User{ID: 1, ProfilePictureID: "old-id"}, nil).
+			Once()
 
 		body, contentType := newMultipartBody(t, validFields, "avatar.txt", "hello")
 
@@ -180,8 +196,35 @@ func TestUsersEditProfile(t *testing.T) {
 		require.Equal(t, "invalid file format", envelope.Message)
 	})
 
+	t.Run("user not found", func(t *testing.T) {
+		mockService := usersmocks.NewMockService(t)
+		handler := NewUsers(mockService, &stubUploader{})
+
+		mockService.EXPECT().
+			GetProfile(anyCtx(), uint(1)).
+			Return(usersPkg.User{}, errors.New("user not found")).
+			Once()
+
+		body, contentType := newMultipartBody(t, validFields, "avatar.png", "hello")
+
+		app, token := newAuthedApp(t, http.MethodPatch, "/profile/edit", handler.EditProfile)
+
+		resp := performAuthed(t, app, http.MethodPatch, "/profile/edit", body, contentType, token)
+		require.Equal(t, http.StatusNotFound, resp.StatusCode)
+
+		var envelope responseEnvelope
+		readResponse(t, resp, &envelope)
+		require.Equal(t, "user not found", envelope.Message)
+	})
+
 	t.Run("upload error", func(t *testing.T) {
-		handler, _ := newUsersHandler(t, &stubUploader{err: errors.New("cloudinary down")})
+		mockService := usersmocks.NewMockService(t)
+		handler := NewUsers(mockService, &stubUploader{err: errors.New("cloudinary down")})
+
+		mockService.EXPECT().
+			GetProfile(anyCtx(), uint(1)).
+			Return(usersPkg.User{ID: 1, ProfilePictureID: "old-id"}, nil).
+			Once()
 
 		body, contentType := newMultipartBody(t, validFields, "avatar.png", "hello")
 
@@ -195,17 +238,74 @@ func TestUsersEditProfile(t *testing.T) {
 		require.Equal(t, "upload failed", envelope.Message)
 	})
 
-	t.Run("success", func(t *testing.T) {
-		handler, mockService := newUsersHandler(t, &stubUploader{url: "https://img/avatar.png"})
+	t.Run("delete old file error", func(t *testing.T) {
+		mockService := usersmocks.NewMockService(t)
+		uploader := &stubUploader{url: "https://img/avatar.png", publicID: "new-id", deleteErr: errors.New("destroy failed")}
+		handler := NewUsers(mockService, uploader)
 
 		mockService.EXPECT().
+			GetProfile(anyCtx(), uint(1)).
+			Return(usersPkg.User{ID: 1, ProfilePictureID: "old-id"}, nil).
+			Once()
+
+		body, contentType := newMultipartBody(t, validFields, "avatar.png", "hello")
+
+		app, token := newAuthedApp(t, http.MethodPatch, "/profile/edit", handler.EditProfile)
+
+		resp := performAuthed(t, app, http.MethodPatch, "/profile/edit", body, contentType, token)
+		require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+		require.Equal(t, "old-id", uploader.deletedID)
+
+		var envelope responseEnvelope
+		readResponse(t, resp, &envelope)
+		require.Equal(t, "old file failed to delete", envelope.Message)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		uploader := &stubUploader{url: "https://img/avatar.png", publicID: "new-id"}
+		handler, mockService := newUsersHandler(t, uploader)
+
+		mockService.EXPECT().
+			GetProfile(anyCtx(), uint(1)).
+			Return(usersPkg.User{ID: 1, ProfilePictureID: "old-id"}, nil).
+			Once()
+		mockService.EXPECT().
 			Update(anyCtx(), mock.MatchedBy(func(req *usersPkg.EditProfileRequest) bool {
-				return req.Username == "testuser" && req.ProfilePicture == "https://img/avatar.png"
+				return req.Username == "testuser" &&
+					req.ProfilePicture == "https://img/avatar.png" &&
+					req.ProfilePictureID == "new-id"
 			}), uint(1)).
 			Return(usersPkg.User{ID: 1, Username: "testuser", ProfilePicture: "https://img/avatar.png"}, nil).
 			Once()
 
 		body, contentType := newMultipartBody(t, validFields, "avatar.png", "hello")
+
+		app, token := newAuthedApp(t, http.MethodPatch, "/profile/edit", handler.EditProfile)
+
+		resp := performAuthed(t, app, http.MethodPatch, "/profile/edit", body, contentType, token)
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+		require.Equal(t, "old-id", uploader.deletedID)
+
+		var envelope responseEnvelope
+		readResponse(t, resp, &envelope)
+		require.Equal(t, "profile updated", envelope.Message)
+	})
+
+	t.Run("success without file", func(t *testing.T) {
+		handler, mockService := newUsersHandler(t, &stubUploader{})
+
+		mockService.EXPECT().
+			GetProfile(anyCtx(), uint(1)).
+			Return(usersPkg.User{ID: 1, ProfilePicture: "https://img/old.png", ProfilePictureID: "old-id"}, nil).
+			Once()
+		mockService.EXPECT().
+			Update(anyCtx(), mock.MatchedBy(func(req *usersPkg.EditProfileRequest) bool {
+				return req.ProfilePicture == "https://img/old.png" && req.ProfilePictureID == "old-id"
+			}), uint(1)).
+			Return(usersPkg.User{ID: 1, Username: "testuser"}, nil).
+			Once()
+
+		body, contentType := newMultipartBody(t, validFields, "", "")
 
 		app, token := newAuthedApp(t, http.MethodPatch, "/profile/edit", handler.EditProfile)
 
@@ -218,8 +318,12 @@ func TestUsersEditProfile(t *testing.T) {
 	})
 
 	t.Run("service error", func(t *testing.T) {
-		handler, mockService := newUsersHandler(t, &stubUploader{url: "https://img/avatar.png"})
+		handler, mockService := newUsersHandler(t, &stubUploader{url: "https://img/avatar.png", publicID: "new-id"})
 
+		mockService.EXPECT().
+			GetProfile(anyCtx(), uint(1)).
+			Return(usersPkg.User{ID: 1, ProfilePictureID: "old-id"}, nil).
+			Once()
 		mockService.EXPECT().
 			Update(anyCtx(), mock.MatchedBy(func(req *usersPkg.EditProfileRequest) bool { return true }), uint(1)).
 			Return(usersPkg.User{}, errors.New("db down")).

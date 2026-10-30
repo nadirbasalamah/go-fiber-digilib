@@ -44,12 +44,12 @@ func TestRegister_Success(t *testing.T) {
 	req := testRegisterReq()
 
 	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "users"`)).
-		WithArgs("testuser", "test@example.com", sqlmock.AnyArg(), "123 Test St", int64(1), int64(2), int64(3), "", "user", sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WithArgs("testuser", "test@example.com", sqlmock.AnyArg(), "123 Test St", int64(1), int64(2), int64(3), "", "", "user", sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(int64(1)))
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT "users"."id","users"."username"`)).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "username", "email", "password", "address", "province_id", "city_id", "district_id", "profile_picture", "role", "created_at", "updated_at", "deleted_at"}).
-			AddRow(int64(1), "testuser", "test@example.com", "hashed_pass", "123 Test St", int64(1), int64(2), int64(3), "", "user", nil, nil, nil))
+		WillReturnRows(sqlmock.NewRows([]string{"id", "username", "email", "password", "address", "province_id", "city_id", "district_id", "profile_picture", "profile_picture_id", "role", "created_at", "updated_at", "deleted_at"}).
+			AddRow(int64(1), "testuser", "test@example.com", "hashed_pass", "123 Test St", int64(1), int64(2), int64(3), "", "", "user", nil, nil, nil))
 
 	user, err := r.Register(context.Background(), req)
 	require.NoError(t, err)
@@ -69,7 +69,7 @@ func TestRegister_ErrorOnInsert(t *testing.T) {
 	req := testRegisterReq()
 
 	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "users"`)).
-		WithArgs("testuser", "test@example.com", sqlmock.AnyArg(), "123 Test St", int64(1), int64(2), int64(3), "", "user", sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WithArgs("testuser", "test@example.com", sqlmock.AnyArg(), "123 Test St", int64(1), int64(2), int64(3), "", "", "user", sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnError(errors.New("insert error"))
 
 	_, err := r.Register(context.Background(), req)
@@ -83,7 +83,7 @@ func TestRegister_ErrorOnLastQuery(t *testing.T) {
 	req := testRegisterReq()
 
 	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "users"`)).
-		WithArgs("testuser", "test@example.com", sqlmock.AnyArg(), "123 Test St", int64(1), int64(2), int64(3), "", "user", sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WithArgs("testuser", "test@example.com", sqlmock.AnyArg(), "123 Test St", int64(1), int64(2), int64(3), "", "", "user", sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(int64(1)))
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT "users"."id","users"."username"`)).
