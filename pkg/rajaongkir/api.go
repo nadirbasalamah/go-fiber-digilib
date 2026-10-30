@@ -10,17 +10,23 @@ import (
 
 const BASE_URL = "https://rajaongkir.komerce.id/api/v1"
 
-type Service struct {
+type Service interface {
+	GetDeliveryFee(req GetFeeRequest) (float64, error)
+}
+
+type service struct {
 	client clients.HTTPClient
 }
 
+var _ Service = (*service)(nil)
+
 func InitService() Service {
-	return Service{
+	return &service{
 		client: clients.InitHTTPClient(BASE_URL, 10, utils.GetConfig(constant.RAJAONGKIR_API_KEY)),
 	}
 }
 
-func (r *Service) GetDeliveryFee(req GetFeeRequest) (float64, error) {
+func (r *service) GetDeliveryFee(req GetFeeRequest) (float64, error) {
 	var response FeeResponse
 
 	payload := map[string]string{

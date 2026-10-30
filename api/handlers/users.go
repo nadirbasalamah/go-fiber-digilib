@@ -10,14 +10,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cloudinary/cloudinary-go/v2"
-	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 	"github.com/gofiber/fiber/v3"
 )
 
 type Users struct {
-	users usersPkg.Service
-	cld   *cloudinary.Cloudinary
+	users    usersPkg.Service
+	uploader fileupload.Uploader
 }
 
 func (u Users) GetProfile(ctx fiber.Ctx) error {
@@ -92,13 +90,7 @@ func (u Users) EditProfile(ctx fiber.Ctx) error {
 		})
 	}
 
-	uploaderCfg := fileupload.CloudinaryUploader{
-		Cld:     u.cld,
-		File:    file,
-		Options: uploader.UploadParams{},
-	}
-
-	fileLink, err := uploaderCfg.UploadFile(ctx.Context())
+	fileLink, err := u.uploader.UploadFile(ctx.Context(), file)
 
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
@@ -125,10 +117,10 @@ func (u Users) EditProfile(ctx fiber.Ctx) error {
 	})
 }
 
-func NewUsers(users usersPkg.Service, cld *cloudinary.Cloudinary) Users {
+func NewUsers(users usersPkg.Service, uploader fileupload.Uploader) Users {
 	usersHandler := Users{
-		users: users,
-		cld:   cld,
+		users:    users,
+		uploader: uploader,
 	}
 
 	return usersHandler

@@ -12,15 +12,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cloudinary/cloudinary-go/v2"
-	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 	"github.com/gofiber/fiber/v3"
 )
 
 type Books struct {
 	books          books.Service
 	recommendation ai.Service
-	cld            *cloudinary.Cloudinary
+	uploader       fileupload.Uploader
 }
 
 func (b Books) GetAll(ctx fiber.Ctx) error {
@@ -144,13 +142,7 @@ func (b Books) Create(ctx fiber.Ctx) error {
 		})
 	}
 
-	uploaderCfg := fileupload.CloudinaryUploader{
-		Cld:     b.cld,
-		File:    file,
-		Options: uploader.UploadParams{},
-	}
-
-	fileLink, err := uploaderCfg.UploadFile(ctx.Context())
+	fileLink, err := b.uploader.UploadFile(ctx.Context(), file)
 
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
@@ -210,13 +202,7 @@ func (b Books) Update(ctx fiber.Ctx) error {
 		})
 	}
 
-	uploaderCfg := fileupload.CloudinaryUploader{
-		Cld:     b.cld,
-		File:    file,
-		Options: uploader.UploadParams{},
-	}
-
-	fileLink, err := uploaderCfg.UploadFile(ctx.Context())
+	fileLink, err := b.uploader.UploadFile(ctx.Context(), file)
 
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(dtos.Response[any]{
@@ -307,10 +293,10 @@ func (b Books) GetBookRecommendation(ctx fiber.Ctx) error {
 	})
 }
 
-func NewBooks(books books.Service, cld *cloudinary.Cloudinary, recommendation ai.Service) Books {
+func NewBooks(books books.Service, uploader fileupload.Uploader, recommendation ai.Service) Books {
 	booksHandler := Books{
 		books:          books,
-		cld:            cld,
+		uploader:       uploader,
 		recommendation: recommendation,
 	}
 

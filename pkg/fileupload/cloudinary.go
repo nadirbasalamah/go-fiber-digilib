@@ -3,6 +3,7 @@ package fileupload
 import (
 	"context"
 	"log"
+	"mime/multipart"
 
 	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
@@ -12,9 +13,12 @@ type CloudinaryConfig struct {
 	CloudinaryURL string
 }
 
+type Uploader interface {
+	UploadFile(ctx context.Context, file *multipart.FileHeader) (string, error)
+}
+
 type CloudinaryUploader struct {
 	Cld     *cloudinary.Cloudinary
-	File    any
 	Options uploader.UploadParams
 }
 
@@ -30,8 +34,8 @@ func (c *CloudinaryConfig) InitCloudinary() *cloudinary.Cloudinary {
 	return cld
 }
 
-func (c *CloudinaryUploader) UploadFile(ctx context.Context) (string, error) {
-	resp, err := c.Cld.Upload.Upload(ctx, c.File, c.Options)
+func (c *CloudinaryUploader) UploadFile(ctx context.Context, file *multipart.FileHeader) (string, error) {
+	resp, err := c.Cld.Upload.Upload(ctx, file, c.Options)
 
 	if err != nil {
 		return "", err

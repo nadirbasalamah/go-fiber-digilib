@@ -23,7 +23,7 @@ func (u update) Update(ctx context.Context, editReq *EditProfileRequest, id uint
 	result := u.repository.WithContext(ctx).Where("id = ?", id).Updates(&user)
 
 	if err := result.Error; err != nil {
-		return User{}, nil
+		return User{}, err
 	}
 
 	record, err := u.get.GetProfile(ctx, id)

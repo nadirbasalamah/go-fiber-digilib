@@ -8,6 +8,7 @@ import (
 	"go-fiber-digilib/carts"
 	"go-fiber-digilib/categories"
 	"go-fiber-digilib/pkg/ai"
+	"go-fiber-digilib/pkg/fileupload"
 	"go-fiber-digilib/pkg/rajaongkir"
 	"go-fiber-digilib/rents"
 	"go-fiber-digilib/settings"
@@ -35,9 +36,10 @@ func NewApp(repository *gorm.DB, cld *cloudinary.Cloudinary, jwtConfig middlewar
 		roService             = rajaongkir.InitService()
 		recommendationService = ai.InitService()
 		authHandler           = handlers.NewAuth(authService, jwtConfig)
-		usersHandler          = handlers.NewUsers(userService, cld)
+		uploader              = &fileupload.CloudinaryUploader{Cld: cld}
+		usersHandler          = handlers.NewUsers(userService, uploader)
 		categoriesHandler     = handlers.NewCategories(categoryService)
-		booksHandler          = handlers.NewBooks(bookService, cld, recommendationService)
+		booksHandler          = handlers.NewBooks(bookService, uploader, recommendationService)
 		settingsHandler       = handlers.NewSettings(settingService)
 		cartsHandler          = handlers.NewCarts(cartService)
 		rentsHandler          = handlers.NewRents(

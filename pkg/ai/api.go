@@ -11,17 +11,23 @@ import (
 
 const BASE_URL = "https://openrouter.ai/api/v1"
 
-type Service struct {
+type Service interface {
+	GetBookRecommendation(req BookRecommendationRequest) (PromptResponse, error)
+}
+
+type service struct {
 	client clients.HTTPClient
 }
 
+var _ Service = (*service)(nil)
+
 func InitService() Service {
-	return Service{
+	return &service{
 		client: clients.InitHTTPClient(BASE_URL, 40, utils.GetConfig(constant.AI_API_KEY)),
 	}
 }
 
-func (r *Service) GetBookRecommendation(req BookRecommendationRequest) (PromptResponse, error) {
+func (r *service) GetBookRecommendation(req BookRecommendationRequest) (PromptResponse, error) {
 	var response PromptResponse
 
 	var model string = utils.GetConfig(constant.AI_MODEL)
